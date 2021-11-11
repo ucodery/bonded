@@ -5,8 +5,11 @@ build-backend = "flit_core.buildapi"
 [project]
 name = "bonded"
 version = "0.1a1"
+readme = "README.md"
+license = {file = "LICENSE"}
 authors = [{name = "Jeremiah Paige", email = "ucodery@gmail.com"}]
 classifiers = ["License :: OSI Approved :: MIT License"]
+keywords = ["linter", "imports", "project", "metadata"]
 dynamic = ["description"]
 
 dependencies = [
