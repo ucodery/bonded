@@ -18,9 +18,9 @@ def format_verbose_output(inspection):
             columns.append([package.package_name, True, "---", "---"])
         else:
             mod = package.modules.pop(0)
-            columns.append([package.package_name, mod.found_import_stmt, mod.normalized_name, mod.found_import_stmt])
+            columns.append([package.package_name, mod.found_import_stmt, mod.module_name, mod.found_import_stmt])
         for mod in package.modules:
-            columns.append(["---", "---", mod.normalized_name, mod.found_import_stmt])
+            columns.append(["---", "---", mod.module_name, mod.found_import_stmt])
     return tabulate(columns, headers, tablefmt="fancy_grid")
 
 
@@ -40,6 +40,6 @@ def format_normal_output(inspection):
             not_found.append(pkg)
     if not_found:
         headers = ["Unused Package", "Imports Not Found"]
-        columns = [[p.package_name, ", ".join(m.normalized_name for m in p.modules)] for p in not_found]
+        columns = [[p.package_name, ", ".join(m.module_name for m in p.modules)] for p in not_found]
         return tabulate(columns, headers, tablefmt="fancy_grid")
     return ""

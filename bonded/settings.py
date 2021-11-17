@@ -19,9 +19,9 @@ class Settings:
 def gather_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--packages", default="")
-    parser.add_argument("-r", "--requirements", action="append")
+    parser.add_argument("-r", "--requirements", action="append", default=[])
     parser.add_argument("--pyproject", default="")
-    parser.add_argument("--exclude", action="append", help="A regular expression that will exclude paths otherwise matched")
+    parser.add_argument("--exclude", action="append", help="A regular expression that will exclude paths otherwise matched", default=[])
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("search_path", nargs="?", default=os.getcwd())
