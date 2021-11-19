@@ -1,10 +1,23 @@
+import re
 import warnings
 from pathlib import Path
 
-from .bonded import inspect_imports, iter_source_files
+from .module_inspection import ModuleInspection
+from .package_inspection import clean_requirement, PackageInspection
 from .display import format_final_disaplay
-from .requirements import from_pip_requirements, from_pyproject, from_string
 from .settings import Settings, gather_args, gather_config
+
+
+def iter_source_files(starting_dir, excludes):
+    exclude_patterns = [re.compile(exclude) for exclude in excludes]
+
+    for path in Path(starting_dir).rglob('*.py'):
+        spath = str(path)
+        for exclude in exclude_patterns:
+            if exclude.match(spath) is not None:
+                break
+        else:
+            yield path
 
 
 def main():
@@ -29,14 +42,17 @@ def main():
     user_settings.update(arguments._get_kwargs())
     settings = Settings(**user_settings)
 
-    given_requirements = from_string(settings.packages)
-    given_requirements.extend(from_pip_requirements(settings.requirements))
+    packages = PackageInspection(clean_requirement(req) for req in settings.packages)
     if pyproject:
-        given_requirements.extend(from_pyproject(pyproject))
+        packages.update_from_pyproject(pyproject)
+    for pip_requirements in settings.requirements:
+        packages.update_from_pip_requirements(pip_requirements)
 
     all_files = iter_source_files(settings.search_path, settings.exclude)
-    inspection = inspect_imports(all_files, given_requirements)
-    print(format_final_disaplay(settings, inspection))
+    modules = ModuleInspection()
+    modules.inspect_imports(all_files)
+
+    print(format_final_disaplay(settings, modules, packages))
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "bonded"
-version = "0.1a2"
+version = "0.1a3"
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [{name = "Jeremiah Paige", email = "ucodery@gmail.com"}]

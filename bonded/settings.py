@@ -25,8 +25,11 @@ def gather_args():
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("search_path", nargs="?", default=os.getcwd())
+    args = parser.parse_args()
 
-    return parser.parse_args()
+    args.packages = args.packages.replace(",", " ").split()
+
+    return args
 
 
 def gather_config(pyproject):
