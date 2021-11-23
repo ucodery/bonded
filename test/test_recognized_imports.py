@@ -1,7 +1,11 @@
 from io import StringIO
 import pytest
 
-from bonded.bonded import find_imports_from_token
+from bonded.module_inspection import ModuleInspection
+
+@pytest.fixture(autouse=True)
+def module_inspection():
+    return ModuleInspection()
 
 
 @pytest.mark.parametrize("stmt",
@@ -22,10 +26,12 @@ from bonded.bonded import find_imports_from_token
         "raise RuntimeError from SyntaxError; import foo",
     ],
 )
-def test_import_statement(stmt, tmp_path):
+def test_import_statement(stmt, module_inspection, tmp_path):
     tgt = tmp_path / "test_import_statement.py"
     tgt.write_text(stmt)
-    assert find_imports_from_token(tgt) == {"foo": "statement"}
+    module_inspection.find_imports_from_token(tgt)
+    assert "foo" in module_inspection
+    assert module_inspection["foo"].found_import_stmt
 
 
 @pytest.mark.parametrize("stmt",
@@ -35,10 +41,16 @@ def test_import_statement(stmt, tmp_path):
         "from foo import baz as foo; from bar import *; from qux import xuq",
     ]
 )
-def test_multi_import(stmt, tmp_path):
+def test_multi_import(stmt, module_inspection, tmp_path):
     tgt = tmp_path / "test_import_statement.py"
     tgt.write_text(stmt)
-    assert find_imports_from_token(tgt) == {"foo": "statement", "bar": "statement", "qux": "statement"}
+    module_inspection.find_imports_from_token(tgt)
+    assert "foo" in module_inspection
+    assert module_inspection["foo"].found_import_stmt
+    assert "bar" in module_inspection
+    assert module_inspection["bar"].found_import_stmt
+    assert "qux" in module_inspection
+    assert module_inspection["qux"].found_import_stmt
 
 @pytest.mark.parametrize("stmt",
     [
@@ -51,10 +63,11 @@ def test_multi_import(stmt, tmp_path):
         "raise RuntimeError from SyntaxError",
     ]
 )
-def test_ignored_import(stmt, tmp_path):
+def test_ignored_import(stmt, module_inspection, tmp_path):
     tgt = tmp_path / "test_ignored_import.py"
     tgt.write_text(stmt)
-    assert find_imports_from_token(tgt) == {}
+    module_inspection.find_imports_from_token(tgt)
+    assert not module_inspection
 
 @pytest.mark.parametrize("fun",
     [
@@ -63,10 +76,12 @@ def test_ignored_import(stmt, tmp_path):
         "run_module('foo')",
     ]
 )
-def test_dynamic_import(fun, tmp_path):
+def test_dynamic_import(fun, module_inspection, tmp_path):
     tgt = tmp_path / "test_dynamic_import.py"
     tgt.write_text(fun)
-    assert find_imports_from_token(tgt) == {"foo": "function"}
+    module_inspection.find_imports_from_token(tgt)
+    assert "foo" in module_inspection
+    assert module_inspection["foo"].found_import_fun
 
 @pytest.mark.parametrize("fun",
     [
@@ -75,7 +90,8 @@ def test_dynamic_import(fun, tmp_path):
         "run_module.__name__",
     ]
 )
-def test_lookalike_dynamic_import(fun, tmp_path):
+def test_lookalike_dynamic_import(fun, module_inspection, tmp_path):
     tgt = tmp_path / "test_lookalike_dynamic_import.py"
     tgt.write_text(fun)
-    assert find_imports_from_token(tgt) == {}
+    module_inspection.find_imports_from_token(tgt)
+    assert not module_inspection

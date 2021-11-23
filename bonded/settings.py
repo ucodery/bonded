@@ -15,6 +15,11 @@ class Settings:
     verbose: bool
     quiet: bool
 
+    @property
+    def project_modules(self):
+        modules = [os.path.basename(os.path.realpath(self.search_path))]
+        return modules
+
 
 def gather_args():
     parser = argparse.ArgumentParser()
