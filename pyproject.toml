@@ -14,7 +14,7 @@ dynamic = ["description"]
 
 dependencies = [
     "packaging",
-    "provides",
+    "provides~=0.0.2",
     "tabulate",
     "tomli",
 ]

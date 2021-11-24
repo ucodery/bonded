@@ -1,10 +1,11 @@
 import importlib.metadata as pkg_metadata
+import itertools
 from pathlib import Path
 
 import tomli
 
 from packaging import utils as pkgutil
-from provides import provided_modules
+from provides import Package as Provides
 from provides.errors import PackageNotFoundError
 
 
@@ -43,6 +44,14 @@ class Package:
             self.modules = pkg_metadata.packages_distributions()[self.normalized_name]
         except KeyError:
             raise ValueError(f"Package {package_name} is not installed in this python interpreter")
+        # NOTE it would be *really* nice if EntryPoints both recorded which package an entry point came from originally
+        # and provided a flat way to iterate over them...
+        # value like 'setuptools.dist:check_entry_points', group like 'distutils.setup_keywords'
+        self.extends = {
+            ep.group.split('.')[0]
+            for ep in itertools.chain.from_iterable(pkg_metadata.entry_points().values())
+            if ep.value.split('.')[0] == self.normalized_name
+        }
 
 
     def __eq__(self, other):

@@ -6,7 +6,8 @@ def format_final_disaplay(settings, modules, packages):
     excess_packages = []
     for pkg in packages.values():
         if not any((modules[mod].found_import_stmt or modules[mod].found_import_fun) for mod in pkg.modules):
-            excess_packages.append(pkg)
+            if not any((modules[(m := mod.split(".", 1)[0])].found_import_stmt or modules[m].found_import_fun) for mod in pkg.extends):
+                excess_packages.append(pkg)
 
     excess_modules = []
     for mod in modules.iter_3rd_party(skip_modules=settings.project_modules):
@@ -15,6 +16,13 @@ def format_final_disaplay(settings, modules, packages):
                 break
         else:
             excess_modules.append(modules[mod])
+
+    # Workarounds for problem packages
+    for i, pkg in enumerate(excess_packages[:]):
+        if pkg.package_name == 'wheel':
+            # wheel only extends distutils, but setuptools is more frequently imported
+            if modules['setuptools'].found_import_stmt or modules['setuptools'].found_import_fun:
+                del excess_packages[i]
 
     if settings.verbose:
         return format_verbose_output(modules, excess_modules, packages) or success_message
