@@ -1,3 +1,4 @@
+import importlib.metadata as pkg_metadata
 from pathlib import Path
 
 import tomli
@@ -39,13 +40,10 @@ class Package:
         self.package_name = package_name
         self.normalized_name = pkgutil.canonicalize_name(package_name)
         try:
-            self.modules = provided_modules(self.package_name)
-            self.found_distribution = True
-        except PackageNotFoundError:
-            # If the package cannot be found, assume it provides one top level
-            # module with the same name as the package
-            self.modules = [self.normalized_name.replace("-", "_")]
-            self.found_distribution = False
+            self.modules = pkg_metadata.packages_distributions()[self.normalized_name]
+        except KeyError:
+            raise ValueError(f"Package {package_name} is not installed in this python interpreter")
+
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -54,7 +52,7 @@ class Package:
 
 
 class PackageInspection(dict):
-    """Inspect useage of all package requirements by a project"""
+    """Inspect usage of all package requirements by a project"""
 
     def __init__(self, requirements):
         for req in requirements:

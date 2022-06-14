@@ -1,11 +1,4 @@
-import tokenize
-import warnings
 from enum import IntEnum
-from pathlib import Path
-
-from packaging import utils as pkgutil
-from provides import provided_modules
-from provides.errors import PackageNotFoundError
 
 
 class Confidence(IntEnum):
