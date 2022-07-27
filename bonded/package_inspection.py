@@ -1,5 +1,6 @@
 import importlib.metadata as pkg_metadata
 import itertools
+import re
 from pathlib import Path
 
 import tomli
@@ -8,6 +9,28 @@ from packaging import utils as pkgutil
 from provides import Package as Provides
 from provides.errors import PackageNotFoundError
 
+def detect_file_type(file_path, first_line):
+    executor = ""
+    if first_line:
+        if first_line.startswith("#!"):
+            first_line = first_line[2:].strip()
+            shebang = first_line.split()
+            if len(shebang) > 1 and (shebang[0] == "env" or shebang[0].endswith("/env")):
+                shebang.pop(0)
+            executor = shebang[0].rsplit("/")[-1]
+
+    if (file_path.suffix in ["py",]
+        or executor in ["python", "python2", "python3"]
+    ):
+        return "python"
+    if (file_path.suffix in ["sh", "bash", "zsh", "fish", "xosh"]
+        or executor in ["sh", "bash", "zsh", "fish", "xosh"]
+    ):
+        return "shell"
+    if file_path.suffix in ["ini", "cfg"]:
+        return "ini"
+    if file_path.suffix in ["yaml", "yml"]:
+        return "yaml"
 
 def clean_requirement(requirement):
     """Return only the name portion of a Python Dependency Specification string
@@ -50,6 +73,11 @@ class Package:
         self.extends = {
             ep.group.split('.')[0]
             for ep in itertools.chain.from_iterable(pkg_metadata.entry_points().values())
+            if ep.value.split('.')[0] == self.normalized_name and ep.group != 'console_scripts'
+        }
+        self.executables = {
+            ep.name
+            for ep in pkg_metadata.entry_points(group='console_scripts')
             if ep.value.split('.')[0] == self.normalized_name
         }
 
@@ -99,3 +127,20 @@ class PackageInspection(dict):
                     self.update_from_pip_requirements(requirements_file.with_name(sub_requirement))
                     continue
                 self[clean_requirement(requirement)]
+
+    def inspect_executables(self, project_files):
+        #TODO: python -m but only after finding __main__.py
+        # re.compile(fr"\bpython[\d.]*\s+-m\s+{exe}\b")
+        exe_searches = {exe: (pkg, re.compile(fr"\b{exe}\b"))
+                              for pkg in self.values() for exe in pkg.executables}
+        for project_file in project_files:
+            pfile = project_file.read_text().splitlines()
+            if not pfile:
+                continue
+
+            file_type = detect_file_type(project_file.name, pfile[0])
+
+            for number, line in enumerate(pfile):
+                for exe in exe_searches:
+                    if exe_searches[exe][1].search(line):
+                        self[exe_searches[exe][0]].executables[exe] = (file_type, str(project_file), number)

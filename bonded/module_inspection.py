@@ -62,7 +62,7 @@ class Module:
 
 
 class ModuleInspection(dict):
-    """Inspect useage of all top-level modules imported by a project"""
+    """Inspect usage of all top-level modules imported by a project"""
 
     def __missing__(self, key):
         self[key] = Module(key)

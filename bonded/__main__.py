@@ -8,10 +8,10 @@ from .display import format_final_disaplay
 from .settings import Settings, gather_args, gather_config
 
 
-def iter_source_files(starting_dir, excludes):
+def iter_source_files(starting_dir, excludes, file_pattern):
     exclude_patterns = [re.compile(exclude) for exclude in excludes]
 
-    for path in Path(starting_dir).rglob('*.py'):
+    for path in Path(starting_dir).rglob(file_pattern):
         spath = str(path)
         for exclude in exclude_patterns:
             if exclude.match(spath) is not None:
@@ -42,15 +42,18 @@ def main():
     user_settings.update(arguments._get_kwargs())
     settings = Settings(**user_settings)
 
+    all_files = iter_source_files(settings.search_path, settings.exclude, '*')
+    python_files = iter_source_files(settings.search_path, settings.exclude, '*.py')
+
     packages = PackageInspection(clean_requirement(req) for req in settings.packages)
     if pyproject:
         packages.update_from_pyproject(pyproject)
     for pip_requirements in settings.requirements:
         packages.update_from_pip_requirements(pip_requirements)
+    packages.inspect_executables(all_files)
 
-    all_files = iter_source_files(settings.search_path, settings.exclude)
     modules = ModuleInspection()
-    modules.inspect_imports(all_files)
+    modules.inspect_imports(python_files)
 
     print(format_final_disaplay(settings, modules, packages))
 
