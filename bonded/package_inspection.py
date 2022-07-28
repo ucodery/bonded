@@ -1,4 +1,4 @@
-import importlib.metadata as pkg_metadata
+import importlib_metadata as pkg_metadata
 import itertools
 import re
 from pathlib import Path
@@ -6,8 +6,6 @@ from pathlib import Path
 import tomli
 
 from packaging import utils as pkgutil
-from provides import Package as Provides
-from provides.errors import PackageNotFoundError
 
 def detect_file_type(file_path, first_line):
     executor = ""
@@ -66,7 +64,7 @@ class Package:
         try:
             self.modules = pkg_metadata.packages_distributions()[self.normalized_name]
         except KeyError:
-            raise ValueError(f"Package {package_name} is not installed in this python interpreter")
+            raise ValueError(f"Package {package_name} is not installed in this python interpreter") from None
         # NOTE it would be *really* nice if EntryPoints both recorded which package an entry point came from originally
         # and provided a flat way to iterate over them...
         # value like 'setuptools.dist:check_entry_points', group like 'distutils.setup_keywords'

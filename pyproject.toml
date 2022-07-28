@@ -14,7 +14,7 @@ dynamic = ["description"]
 
 dependencies = [
     "packaging",
-    "provides~=0.0.2",
+    "importlib-metadata>=4.7",
     "tabulate",
     "tomli",
 ]
