@@ -30,7 +30,7 @@ def gather_args():
     parser.add_argument(
         '--exclude',
         action='append',
-        help='A regular expression that will exclude paths otherwise matched',
+        help='A glob that will exclude paths otherwise matched',
         default=[],
     )
     parser.add_argument('--verbose', action='store_true')

@@ -1,4 +1,5 @@
-import re
+import fnmatch
+import os.path
 import warnings
 from pathlib import Path
 
@@ -10,14 +11,13 @@ from .settings import gather_args, gather_config, Settings
 
 
 def iter_source_files(starting_dir, excludes, file_pattern):
-    exclude_patterns = [re.compile(exclude) for exclude in excludes]
+    for i, exclude in enumerate(excludes):
+        if not exclude.startswith(os.path.sep):
+            excludes[i] = f'**/{exclude}'
 
     for path in Path(starting_dir).rglob(file_pattern):
         spath = str(path)
-        for exclude in exclude_patterns:
-            if exclude.match(spath) is not None:
-                break
-        else:
+        if not excludes or not any(fnmatch.fnmatch(spath, exclude) for exclude in excludes):
             yield path
 
 

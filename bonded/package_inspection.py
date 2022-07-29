@@ -1,5 +1,6 @@
 import itertools
 import re
+from collections import defaultdict
 from pathlib import Path
 
 import importlib_metadata as pkg_metadata
@@ -9,15 +10,23 @@ import tomli
 from packaging import utils as pkgutil
 
 
+pkg2dist = pkg_metadata.packages_distributions()
+dist2pkg = defaultdict(list)
+for pkg, dists in pkg2dist.items():
+    for dist in dists:
+        dist2pkg[dist].append(pkg)
+dist2pkg = dict(dist2pkg)
+
+
 def detect_file_type(file_path, first_line):
     executor = ''
     if first_line:
-        if first_line.startswith('#!'):
+        if first_line.startswith(b'#!'):
             first_line = first_line[2:].strip()
             shebang = first_line.split()
-            if len(shebang) > 1 and (shebang[0] == 'env' or shebang[0].endswith('/env')):
+            if len(shebang) > 1 and (shebang[0] == b'env' or shebang[0].endswith(b'/env')):
                 shebang.pop(0)
-            executor = shebang[0].rsplit('/')[-1]
+            executor = shebang[0].rsplit(b'/')[-1]
 
     if file_path.suffix in [
         'py',
@@ -69,7 +78,7 @@ class Package:
         self.package_name = package_name
         self.normalized_name = pkgutil.canonicalize_name(package_name)
         try:
-            self.modules = pkg_metadata.packages_distributions()[self.normalized_name]
+            self.modules = dist2pkg[self.normalized_name]
         except KeyError:
             raise ValueError(
                 f'Package {package_name} is not installed in this python interpreter'
@@ -82,11 +91,15 @@ class Package:
             for ep in itertools.chain.from_iterable(pkg_metadata.entry_points().values())
             if ep.value.split('.')[0] == self.normalized_name and ep.group != 'console_scripts'
         }
+        # TODO: executables should be their own inspection, like modules, with confidence levels
         self.executables = {
-            ep.name
+            ep.name: False
             for ep in pkg_metadata.entry_points(group='console_scripts')
-            if ep.value.split('.')[0] == self.normalized_name
+            if ep.value.split(':')[0].split('.')[0] in self.modules
         }
+
+    def __hash__(self):
+        return hash(self.normalized_name)
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -138,22 +151,20 @@ class PackageInspection(dict):
         # TODO: python -m but only after finding __main__.py
         # re.compile(fr"\bpython[\d.]*\s+-m\s+{exe}\b")
         exe_searches = {
-            exe: (pkg, re.compile(rf'\b{exe}\b'))
+            exe: (pkg, re.compile(rb'\b%b\b' % exe.encode('utf-8')))
             for pkg in self.values()
             for exe in pkg.executables
         }
         for project_file in project_files:
-            pfile = project_file.read_text().splitlines()
+            if not project_file.is_file():
+                continue
+            pfile = project_file.read_bytes().splitlines()
             if not pfile:
                 continue
 
-            file_type = detect_file_type(project_file.name, pfile[0])
+            # file_type = detect_file_type(project_file, pfile[0])
 
-            for number, line in enumerate(pfile):
-                for exe in exe_searches:
-                    if exe_searches[exe][1].search(line):
-                        self[exe_searches[exe][0]].executables[exe] = (
-                            file_type,
-                            str(project_file),
-                            number,
-                        )
+            for line in pfile:
+                for exe, (pkg, search) in exe_searches.items():
+                    if search.search(line):
+                        pkg.executables[exe] = True

@@ -16,7 +16,8 @@ def format_final_disaplay(settings, modules, packages):
                 )
                 for mod in pkg.extends
             ):
-                excess_packages.append(pkg)
+                if not any(pkg.executables.values()):
+                    excess_packages.append(pkg)
 
     excess_modules = []
     for mod in modules.iter_3rd_party(skip_modules=settings.project_modules):
