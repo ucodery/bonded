@@ -23,4 +23,10 @@ dependencies = [
 Home = "https://github.com/ucodery/bonded"
 
 [project.optional-dependencies]
-test = ["pytest >=2.7.3"]
+test = [
+    "pytest >=2.7.3",
+    "blue",
+]
+
+[tool.blue]
+line-length = 100

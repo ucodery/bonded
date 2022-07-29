@@ -25,19 +25,19 @@ def main():
     if arguments.pyproject:
         pyproject = Path(arguments.pyproject)
         if not pyproject.is_file():
-            raise RuntimeWarning(f"Supplied --pyproject cannot be found: {pyproject}")
+            raise RuntimeWarning(f'Supplied --pyproject cannot be found: {pyproject}')
     else:
-        pyproject = Path(arguments.search_path).resolve() / "pyproject.toml"
+        pyproject = Path(arguments.search_path).resolve() / 'pyproject.toml'
         while not pyproject.is_file():
             if pyproject.parent == pyproject.parent.parent:
-                pyproject = ""
+                pyproject = ''
                 break
-            pyproject = pyproject.parent.parent / "pyproject.toml"
+            pyproject = pyproject.parent.parent / 'pyproject.toml'
 
     if pyproject:
         user_settings = gather_config(pyproject)
     else:
-        warnings.warn(f"Could not find {pyproject} to collect requirements")
+        warnings.warn(f'Could not find {pyproject} to collect requirements')
         user_settings = {}
     user_settings.update(arguments._get_kwargs())
     settings = Settings(**user_settings)
@@ -58,5 +58,5 @@ def main():
     print(format_final_disaplay(settings, modules, packages))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

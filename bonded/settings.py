@@ -5,6 +5,7 @@ from typing import List
 
 import tomli
 
+
 @dataclasses.dataclass
 class Settings:
     search_path: str
@@ -23,20 +24,25 @@ class Settings:
 
 def gather_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--packages", default="")
-    parser.add_argument("-r", "--requirements", action="append", default=[])
-    parser.add_argument("--pyproject", default="")
-    parser.add_argument("--exclude", action="append", help="A regular expression that will exclude paths otherwise matched", default=[])
-    parser.add_argument("--verbose", action="store_true")
-    parser.add_argument("--quiet", action="store_true")
-    parser.add_argument("search_path", nargs="?", default=os.getcwd())
+    parser.add_argument('--packages', default='')
+    parser.add_argument('-r', '--requirements', action='append', default=[])
+    parser.add_argument('--pyproject', default='')
+    parser.add_argument(
+        '--exclude',
+        action='append',
+        help='A regular expression that will exclude paths otherwise matched',
+        default=[],
+    )
+    parser.add_argument('--verbose', action='store_true')
+    parser.add_argument('--quiet', action='store_true')
+    parser.add_argument('search_path', nargs='?', default=os.getcwd())
     args = parser.parse_args()
 
-    args.packages = args.packages.replace(",", " ").split()
+    args.packages = args.packages.replace(',', ' ').split()
 
     return args
 
 
 def gather_config(pyproject):
-    with open(pyproject, "rb") as pypj:
-        return tomli.load(pypj).get("tool", {}).get("bonded", {})
+    with open(pyproject, 'rb') as pypj:
+        return tomli.load(pypj).get('tool', {}).get('bonded', {})
