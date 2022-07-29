@@ -74,8 +74,8 @@ class Package:
             raise ValueError(
                 f'Package {package_name} is not installed in this python interpreter'
             ) from None
-        # NOTE it would be *really* nice if EntryPoints both recorded which package an entry point came from originally
-        # and provided a flat way to iterate over them...
+        # NOTE it would be *really* nice if EntryPoints both recorded which package an entry point
+        # came from originally and provided a flat way to iterate over them...
         # value like 'setuptools.dist:check_entry_points', group like 'distutils.setup_keywords'
         self.extends = {
             ep.group.split('.')[0]

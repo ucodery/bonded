@@ -25,7 +25,10 @@ Home = "https://github.com/ucodery/bonded"
 [project.optional-dependencies]
 dev = ["tox"]
 test = ["pytest >=2.7.3"]
-lint = ["blue", "usort"]
+lint = ["blue", "pyproject-flake8", "usort"]
 
 [tool.blue]
 line-length = 100
+
+[tool.flake8]
+max-line-length = 100

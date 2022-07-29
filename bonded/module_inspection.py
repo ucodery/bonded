@@ -409,7 +409,7 @@ class ModuleInspection(dict):
                             token.type == tokenize.NEWLINE or token.exact_type == tokenize.SEMI
                         ):
                             # multiple top level packages cannot be imported under a single 'from'
-                            # but there may be an 'import' keyword that shouldn't trigger the other if
+                            # but there may be an 'import' keyword that shouldn't go to the next if
                             token = next(tokens)
                     if token.type == tokenize.NAME and token.string in (
                         '__import__',
@@ -424,8 +424,8 @@ class ModuleInspection(dict):
                                     followon_token = next(tokens)
                                     if not (
                                         followon_token.type == tokenize.OP
-                                        and not followon_token.exact_type
-                                        in (tokenize.COMMA, tokenize.RPAR)
+                                        and followon_token.exact_type
+                                        not in (tokenize.COMMA, tokenize.RPAR)
                                     ):
                                         add_package_from_function(token)
                                     # else not a constant string literal
