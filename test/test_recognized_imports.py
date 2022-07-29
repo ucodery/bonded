@@ -1,4 +1,5 @@
 from io import StringIO
+
 import pytest
 
 from bonded.module_inspection import ModuleInspection

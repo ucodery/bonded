@@ -1,7 +1,8 @@
-import importlib_metadata as pkg_metadata
 import itertools
 import re
 from pathlib import Path
+
+import importlib_metadata as pkg_metadata
 
 import tomli
 

@@ -2,10 +2,11 @@ import re
 import warnings
 from pathlib import Path
 
+from .display import format_final_disaplay
+
 from .module_inspection import ModuleInspection
 from .package_inspection import clean_requirement, PackageInspection
-from .display import format_final_disaplay
-from .settings import Settings, gather_args, gather_config
+from .settings import gather_args, gather_config, Settings
 
 
 def iter_source_files(starting_dir, excludes, file_pattern):

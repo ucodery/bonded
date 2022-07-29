@@ -25,7 +25,7 @@ Home = "https://github.com/ucodery/bonded"
 [project.optional-dependencies]
 dev = ["tox"]
 test = ["pytest >=2.7.3"]
-lint = ["blue"]
+lint = ["blue", "usort"]
 
 [tool.blue]
 line-length = 100
