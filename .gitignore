@@ -1,3 +1,4 @@
 .python-version
 dist/
 **/__pycache__/
+.tox/
