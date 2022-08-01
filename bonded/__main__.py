@@ -3,10 +3,12 @@ import os.path
 import warnings
 from pathlib import Path
 
+from packaging import requirements as pkgreq
+
 from .display import format_final_disaplay
 
 from .module_inspection import ModuleInspection
-from .package_inspection import clean_requirement, PackageInspection
+from .package_inspection import PackageInspection
 from .settings import gather_args, gather_config, Settings
 
 
@@ -46,7 +48,7 @@ def main():
     all_files = iter_source_files(settings.search_path, settings.exclude, '*')
     python_files = iter_source_files(settings.search_path, settings.exclude, '*.py')
 
-    packages = PackageInspection(clean_requirement(req) for req in settings.packages)
+    packages = PackageInspection(pkgreq.Requirement(req).name for req in settings.packages)
     if pyproject:
         packages.update_from_pyproject(pyproject)
     for pip_requirements in settings.requirements:

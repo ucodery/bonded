@@ -1,4 +1,3 @@
-import itertools
 import re
 from collections import defaultdict
 from pathlib import Path
@@ -7,7 +6,7 @@ import importlib_metadata as pkg_metadata
 
 import tomli
 
-from packaging import utils as pkgutil
+from packaging import requirements as pkgreq, utils as pkgutil
 
 
 pkg2dist = pkg_metadata.packages_distributions()
@@ -46,31 +45,6 @@ def detect_file_type(file_path, first_line):
         return 'yaml'
 
 
-def clean_requirement(requirement):
-    """Return only the name portion of a Python Dependency Specification string
-
-    the name may still be non-normalized
-    """
-    return (
-        requirement
-        # the start of any valid version specifier
-        .split('=')[0]
-        .split('<')[0]
-        .split('>')[0]
-        .split('~')[0]
-        .split('!')[0]
-        # this one is poetry only
-        .split('^')[0]
-        # quoted marker
-        .split(';')[0]
-        # start of any extras
-        .split('[')[0]
-        # url spec
-        .split('@')[0]
-        .strip()
-    )
-
-
 class Package:
     """Record tracking usage of a package"""
 
@@ -83,19 +57,15 @@ class Package:
             raise ValueError(
                 f'Package {package_name} is not installed in this python interpreter'
             ) from None
-        # NOTE it would be *really* nice if EntryPoints both recorded which package an entry point
-        # came from originally and provided a flat way to iterate over them...
-        # value like 'setuptools.dist:check_entry_points', group like 'distutils.setup_keywords'
+        metadata = pkg_metadata.distribution(self.normalized_name)
         self.extends = {
-            ep.group.split('.')[0]
-            for ep in itertools.chain.from_iterable(pkg_metadata.entry_points().values())
-            if ep.value.split('.')[0] == self.normalized_name and ep.group != 'console_scripts'
+            ep.group.split(':')[0].split('.')[0]
+            for ep in metadata.entry_points
+            if ep.group != 'console_scripts'
         }
         # TODO: executables should be their own inspection, like modules, with confidence levels
         self.executables = {
-            ep.name: False
-            for ep in pkg_metadata.entry_points(group='console_scripts')
-            if ep.value.split(':')[0].split('.')[0] in self.modules
+            ep.name: False for ep in metadata.entry_points if ep.group == 'console_scripts'
         }
 
     def __hash__(self):
@@ -107,6 +77,16 @@ class Package:
         return self.normalized_name == other.normalized_name
 
 
+# Sentinal for a package not installed locally
+# the package_name argument doesn't matter, it just need to be valid
+# names changed to '    ', which is an illegal package name,
+# but also not modified by canonicalize_name
+NoPackage = Package(next(iter(dist2pkg)))
+NoPackage.package_name = NoPackage.normalized_name = '    '
+NoPackage.extends = set()
+NoPackage.executables = {}
+
+
 class PackageInspection(dict):
     """Inspect usage of all package requirements by a project"""
 
@@ -115,8 +95,14 @@ class PackageInspection(dict):
             self[req]
 
     def __missing__(self, key):
-        p = Package(key)
-        self[p.normalized_name] = p
+        ckey = pkgutil.canonicalize_name(key)
+        if ckey in self:
+            return self[ckey]
+        try:
+            p = Package(key)
+        except ValueError:
+            p = NoPackage
+        self[ckey] = p
         return p
 
     def update_from_pyproject(self, pyproject_toml):
@@ -126,12 +112,11 @@ class PackageInspection(dict):
             project = pyproject.get('project', {})
 
             for dependency in project.get('dependencies', []):
-                self[clean_requirement(dependency)]
+                self[pkgreq.Requirement(dependency).name]
 
-            optional_dependencies = project.get('optional-dependencies', {})
-            for optionals in optional_dependencies.values():
+            for optionals in project.get('optional-dependencies', {}).values():
                 for optional in optionals:
-                    self[clean_requirement(optional)]
+                    self[pkgreq.Requirement(optional).name]
 
     def update_from_pip_requirements(self, requirements_file):
         """Add all packages found in the given requirements file"""
@@ -145,7 +130,7 @@ class PackageInspection(dict):
                     sub_requirement = requirement[2:].strip()
                     self.update_from_pip_requirements(requirements_file.with_name(sub_requirement))
                     continue
-                self[clean_requirement(requirement)]
+                self[pkgreq.Requirement(requirement).name]
 
     def inspect_executables(self, project_files):
         # TODO: python -m but only after finding __main__.py
