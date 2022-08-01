@@ -7,6 +7,7 @@ from packaging import requirements as pkgreq
 
 from .display import format_final_disaplay
 
+from .executable_inspection import ExecutableInspection
 from .module_inspection import ModuleInspection
 from .package_inspection import PackageInspection
 from .settings import gather_args, gather_config, Settings
@@ -53,12 +54,14 @@ def main():
         packages.update_from_pyproject(pyproject)
     for pip_requirements in settings.requirements:
         packages.update_from_pip_requirements(pip_requirements)
-    packages.inspect_executables(all_files)
 
     modules = ModuleInspection()
     modules.inspect_imports(python_files)
 
-    print(format_final_disaplay(settings, modules, packages))
+    executables = ExecutableInspection((e for p in packages.values() for e in p.executables))
+    executables.inspect_executables(all_files)
+
+    print(format_final_disaplay(settings, modules, packages, executables))
 
 
 if __name__ == '__main__':

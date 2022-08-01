@@ -1,4 +1,3 @@
-import re
 from collections import defaultdict
 from pathlib import Path
 
@@ -15,34 +14,6 @@ for pkg, dists in pkg2dist.items():
     for dist in dists:
         dist2pkg[dist].append(pkg)
 dist2pkg = dict(dist2pkg)
-
-
-def detect_file_type(file_path, first_line):
-    executor = ''
-    if first_line:
-        if first_line.startswith(b'#!'):
-            first_line = first_line[2:].strip()
-            shebang = first_line.split()
-            if len(shebang) > 1 and (shebang[0] == b'env' or shebang[0].endswith(b'/env')):
-                shebang.pop(0)
-            executor = shebang[0].rsplit(b'/')[-1]
-
-    if file_path.suffix in [
-        'py',
-    ] or executor in ['python', 'python2', 'python3']:
-        return 'python'
-    if file_path.suffix in [
-        'sh',
-        'bash',
-        'zsh',
-        'fish',
-        'xosh',
-    ] or executor in ['sh', 'bash', 'zsh', 'fish', 'xosh']:
-        return 'shell'
-    if file_path.suffix in ['ini', 'cfg']:
-        return 'ini'
-    if file_path.suffix in ['yaml', 'yml']:
-        return 'yaml'
 
 
 class Package:
@@ -63,9 +34,8 @@ class Package:
             for ep in metadata.entry_points
             if ep.group != 'console_scripts'
         }
-        # TODO: executables should be their own inspection, like modules, with confidence levels
         self.executables = {
-            ep.name: False for ep in metadata.entry_points if ep.group == 'console_scripts'
+            ep.name for ep in metadata.entry_points if ep.group == 'console_scripts'
         }
 
     def __hash__(self):
@@ -84,7 +54,7 @@ class Package:
 NoPackage = Package(next(iter(dist2pkg)))
 NoPackage.package_name = NoPackage.normalized_name = '    '
 NoPackage.extends = set()
-NoPackage.executables = {}
+NoPackage.executables = set()
 
 
 class PackageInspection(dict):
@@ -131,25 +101,3 @@ class PackageInspection(dict):
                     self.update_from_pip_requirements(requirements_file.with_name(sub_requirement))
                     continue
                 self[pkgreq.Requirement(requirement).name]
-
-    def inspect_executables(self, project_files):
-        # TODO: python -m but only after finding __main__.py
-        # re.compile(fr"\bpython[\d.]*\s+-m\s+{exe}\b")
-        exe_searches = {
-            exe: (pkg, re.compile(rb'\b%b\b' % exe.encode('utf-8')))
-            for pkg in self.values()
-            for exe in pkg.executables
-        }
-        for project_file in project_files:
-            if not project_file.is_file():
-                continue
-            pfile = project_file.read_bytes().splitlines()
-            if not pfile:
-                continue
-
-            # file_type = detect_file_type(project_file, pfile[0])
-
-            for line in pfile:
-                for exe, (pkg, search) in exe_searches.items():
-                    if search.search(line):
-                        pkg.executables[exe] = True

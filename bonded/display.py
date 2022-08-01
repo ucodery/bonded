@@ -1,7 +1,7 @@
 from tabulate import tabulate
 
 
-def format_final_disaplay(settings, modules, packages):
+def format_final_disaplay(settings, modules, packages, executables):
     success_message = 'All Good!'
 
     excess_packages = []
@@ -16,7 +16,7 @@ def format_final_disaplay(settings, modules, packages):
                 )
                 for mod in pkg.extends
             ):
-                if not any(pkg.executables.values()):
+                if not any(executables[e].found_executions for e in pkg.executables):
                     excess_packages.append(pkg)
 
     excess_modules = []
