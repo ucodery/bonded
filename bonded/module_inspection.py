@@ -5,6 +5,13 @@ from ._internal import _Record
 from ._sys import stdlib_module_names
 
 
+known_dynamic_loaders = [
+    '__import__',
+    'import_module',
+    'run_module',
+]
+
+
 class Module(_Record):
     """Record tracking modules seen in source code"""
 
@@ -98,24 +105,26 @@ class ModuleInspection(dict):
                             # multiple top level packages cannot be imported under a single 'from'
                             # but there may be an 'import' keyword that shouldn't go to the next if
                             token = next(tokens)
-                    if token.type == tokenize.NAME and token.string in (
-                        '__import__',
-                        'import_module',
-                        'run_module',
-                    ):
+                    if token.type == tokenize.NAME and token.string in (known_dynamic_loaders):
                         try:
                             token = next(tokens)
                             if token.exact_type == tokenize.LPAR:
                                 token = next(tokens)
-                                if token.type == tokenize.STRING:
-                                    followon_token = next(tokens)
-                                    if not (
-                                        followon_token.type == tokenize.OP
-                                        and followon_token.exact_type
-                                        not in (tokenize.COMMA, tokenize.RPAR)
-                                    ):
-                                        add_package_from_function(token)
-                                    # else not a constant string literal
+                                while not (
+                                    token.type == tokenize.NEWLINE
+                                    or token.exact_type == tokenize.SEMI
+                                ):
+                                    if token.type == tokenize.STRING:
+                                        followon_token = next(tokens)
+                                        if not (
+                                            followon_token.type == tokenize.OP
+                                            and followon_token.exact_type
+                                            not in (tokenize.COMMA, tokenize.RPAR)
+                                        ):
+                                            add_package_from_function(token)
+                                            break
+                                        # else not a constant string literal
+                                    token = next(tokens)
                         except StopIteration:
                             # this is not necessarily a SyntaxError, as these are not keywords
                             pass
