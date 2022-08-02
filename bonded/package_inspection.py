@@ -7,6 +7,8 @@ import tomli
 
 from packaging import requirements as pkgreq, utils as pkgutil
 
+from ._internal import _Record
+
 
 pkg2dist = pkg_metadata.packages_distributions()
 dist2pkg = defaultdict(list)
@@ -16,45 +18,33 @@ for pkg, dists in pkg2dist.items():
 dist2pkg = dict(dist2pkg)
 
 
-class Package:
+class Package(_Record):
     """Record tracking usage of a package"""
 
+    @staticmethod
+    def _normalize_name(name):
+        return pkgutil.canonicalize_name(name)
+
     def __init__(self, package_name):
+        super().__init__(package_name)
         self.package_name = package_name
-        self.normalized_name = pkgutil.canonicalize_name(package_name)
-        try:
-            self.modules = dist2pkg[self.normalized_name]
-        except KeyError:
-            raise ValueError(
-                f'Package {package_name} is not installed in this python interpreter'
-            ) from None
-        metadata = pkg_metadata.distribution(self.normalized_name)
-        self.extends = {
-            ep.group.split(':')[0].split('.')[0]
-            for ep in metadata.entry_points
-            if ep.group != 'console_scripts'
-        }
-        self.executables = {
-            ep.name for ep in metadata.entry_points if ep.group == 'console_scripts'
-        }
-
-    def __hash__(self):
-        return hash(self.normalized_name)
-
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-        return self.normalized_name == other.normalized_name
-
-
-# Sentinal for a package not installed locally
-# the package_name argument doesn't matter, it just need to be valid
-# names changed to '    ', which is an illegal package name,
-# but also not modified by canonicalize_name
-NoPackage = Package(next(iter(dist2pkg)))
-NoPackage.package_name = NoPackage.normalized_name = '    '
-NoPackage.extends = set()
-NoPackage.executables = set()
+        if self.name in dist2pkg:
+            self.installed = True
+            self.modules = dist2pkg[self.name]
+            metadata = pkg_metadata.distribution(self.name)
+            self.extends = {
+                ep.group.split(':')[0].split('.')[0]
+                for ep in metadata.entry_points
+                if ep.group != 'console_scripts'
+            }
+            self.executables = {
+                ep.name for ep in metadata.entry_points if ep.group == 'console_scripts'
+            }
+        else:
+            self.installed = False
+            self.modules = []
+            self.extends = set()
+            self.executables = set()
 
 
 class PackageInspection(dict):
@@ -66,14 +56,9 @@ class PackageInspection(dict):
 
     def __missing__(self, key):
         ckey = pkgutil.canonicalize_name(key)
-        if ckey in self:
-            return self[ckey]
-        try:
-            p = Package(key)
-        except ValueError:
-            p = NoPackage
-        self[ckey] = p
-        return p
+        if ckey not in self:
+            self[ckey] = Package(key)
+        return self[ckey]
 
     def update_from_pyproject(self, pyproject_toml):
         """Add all packages found as requirements in the given pyproject.toml"""

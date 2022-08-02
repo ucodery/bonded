@@ -1,21 +1,17 @@
 import tokenize
 import warnings
 
+from ._internal import _Record
 from ._sys import stdlib_module_names
 
 
-class Module:
+class Module(_Record):
     """Record tracking modules seen in source code"""
 
     def __init__(self, module_name):
-        self.module_name = module_name
+        super().__init__(module_name)
         self.found_import_stmt = False
         self.found_import_fun = False
-
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-        return self.module_name == other.module_name
 
 
 class ModuleInspection(dict):

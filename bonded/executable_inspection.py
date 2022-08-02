@@ -1,4 +1,7 @@
 import re
+from collections import namedtuple
+
+from ._internal import _Record
 
 
 def detect_file_type(file_path, first_line):
@@ -29,38 +32,15 @@ def detect_file_type(file_path, first_line):
         return 'yaml'
 
 
-class _CallingFile:
-    """Record tracking call site of an executable"""
-
-    def __init__(self, file_name, file_type, line):
-        self.file_name = file_name
-        self.file_type = file_type
-        self.line_number = line
-
-    def __hash__(self):
-        return hash((self.file_name, self.file_type, self.line_number))
-
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-        return (
-            self.file_name == other.file_name
-            and self.file_type == other.file_type
-            and self.line_number == other.line_number
-        )
+_CallingFile = namedtuple('_CallingFile', ['file_name', 'file_type', 'line_number'])
 
 
-class Executable:
+class Executable(_Record):
     """Record tracking usage of an executable"""
 
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, executable_name):
+        super().__init__(executable_name)
         self.found_executions = set()
-
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-        return self.name == other.name
 
 
 class ExecutableInspection(dict):

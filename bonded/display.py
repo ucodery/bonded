@@ -22,7 +22,7 @@ def format_final_disaplay(settings, modules, packages, executables):
     excess_modules = []
     for mod in modules.iter_3rd_party(skip_modules=settings.project_modules):
         for pkg in packages.values():
-            if modules[mod].module_name in pkg.modules:
+            if modules[mod].name in pkg.modules:
                 break
         else:
             excess_modules.append(modules[mod])
@@ -67,7 +67,7 @@ def format_verbose_output(modules, excess_modules, packages):
             [
                 '???',
                 '???',
-                mod.module_name,
+                mod.name,
                 (mod.found_import_stmt or mod.found_import_fun),
             ]
         )
@@ -77,7 +77,7 @@ def format_verbose_output(modules, excess_modules, packages):
 def format_quiet_output(excess_modules, excess_packages):
     return (
         f"Packages: {', '.join(p.package_name for p in excess_packages)}\n"
-        f"Modules: {', '.join(m.module_name for m in excess_modules)}"
+        f"Modules: {', '.join(m.name for m in excess_modules)}"
     )
 
 
@@ -93,7 +93,7 @@ def format_normal_output(excess_modules, excess_packages):
         headers = ['Modules Used Without a Package']
         output += '\n'
         output += tabulate(
-            [[m.module_name] for m in excess_modules],
+            [[m.name] for m in excess_modules],
             headers,
             tablefmt='fancy_grid',
         )
