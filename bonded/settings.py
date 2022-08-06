@@ -12,8 +12,9 @@ class Settings:
     exclude: List[str]
     packages: List[str]
     requirements: List[str]
+    report: List[str]
     pyproject: str
-    verbose: bool
+    verbose: int
     quiet: bool
 
     @property
@@ -26,14 +27,15 @@ def gather_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--packages', default='')
     parser.add_argument('-r', '--requirements', action='append', default=[])
-    parser.add_argument('--pyproject', default='')
+    parser.add_argument('--pyproject', default=None)
     parser.add_argument(
         '--exclude',
         action='append',
         help='A glob that will exclude paths otherwise matched',
         default=[],
     )
-    parser.add_argument('--verbose', action='store_true')
+    parser.add_argument('--report', choices=['table', 'extended-table', 'line'], default='table')
+    parser.add_argument('--verbose', '-v', action='count', default=0)
     parser.add_argument('--quiet', action='store_true')
     parser.add_argument('search_path', nargs='?', default=os.getcwd())
     args = parser.parse_args()

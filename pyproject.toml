@@ -13,8 +13,9 @@ keywords = ["linter", "imports", "project", "metadata"]
 dynamic = ["description"]
 
 dependencies = [
-    "packaging",
     "importlib-metadata>=4.7",
+    "packaging",
+    "rich",
     "tabulate",
     "tomli",
 ]

@@ -17,7 +17,6 @@ class _Record:
             record = _record_cache[(cls, name)]
         else:
             record = super().__new__(cls)
-            record.__init__(*args, **kwargs)
             _record_cache[(cls, name)] = record
         return record
 

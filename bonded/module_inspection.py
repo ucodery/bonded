@@ -1,8 +1,12 @@
+import logging
 import tokenize
 import warnings
 
 from ._internal import _Record
 from ._sys import stdlib_module_names
+
+
+log = logging.getLogger(__name__)
 
 
 known_dynamic_loaders = [
@@ -52,6 +56,7 @@ class ModuleInspection(dict):
                 return
             assert token.type == tokenize.NAME, 'illegal syntax'
             self[token.string].found_import_stmt = True
+            log.debug('Module %s was found imported in %s', token.string, source_module)
 
         def add_package_from_function(token):
             value = token.string
@@ -70,6 +75,7 @@ class ModuleInspection(dict):
                 # don't record relative imports
                 return
             self[value].found_import_fun = True
+            log.debug('Module %s was found dynamically imported in %s', token.string, source_module)
 
         with tokenize.open(source_module) as stream:
             try:

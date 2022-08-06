@@ -2,7 +2,7 @@ from tabulate import tabulate
 
 
 def format_final_disaplay(settings, modules, packages, executables):
-    success_message = 'All Good!'
+    success_message = '' if settings.quiet else 'All Good!'
 
     excess_packages = []
     for pkg in packages.values():
@@ -34,15 +34,15 @@ def format_final_disaplay(settings, modules, packages, executables):
             if modules['setuptools'].found_import_stmt or modules['setuptools'].found_import_fun:
                 del excess_packages[i]
 
-    if settings.verbose:
-        return format_verbose_output(modules, excess_modules, packages) or success_message
-    elif settings.quiet:
-        return format_quiet_output(excess_modules, excess_packages)
-    else:
-        return format_normal_output(excess_modules, excess_packages) or success_message
+    if settings.report == 'extended-table':
+        return format_extended_table_output(modules, excess_modules, packages) or success_message
+    elif settings.report == 'table':
+        return format_table_output(excess_modules, excess_packages) or success_message
+    elif settings.report == 'line':
+        return format_line_output(excess_modules, excess_packages) or success_message
 
 
-def format_verbose_output(modules, excess_modules, packages):
+def format_extended_table_output(modules, excess_modules, packages):
     headers = ['Package', 'Used', 'Module', 'Used']
     columns = []
     for package in packages.values():
@@ -74,14 +74,16 @@ def format_verbose_output(modules, excess_modules, packages):
     return tabulate(columns, headers, tablefmt='fancy_grid')
 
 
-def format_quiet_output(excess_modules, excess_packages):
-    return (
-        f"Packages: {', '.join(p.package_name for p in excess_packages)}\n"
-        f"Modules: {', '.join(m.name for m in excess_modules)}"
-    )
+def format_line_output(excess_modules, excess_packages):
+    output = ''
+    if excess_packages:
+        output += f"Packages: {', '.join(p.package_name for p in excess_packages)}\n"
+    if excess_modules:
+        f"""Modules: {', '.join(m.name for m in excess_modules)}"""
+    return output
 
 
-def format_normal_output(excess_modules, excess_packages):
+def format_table_output(excess_modules, excess_packages):
     output = ''
 
     if excess_packages:

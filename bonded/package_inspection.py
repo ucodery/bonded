@@ -1,3 +1,4 @@
+import logging
 from collections import defaultdict
 from pathlib import Path
 
@@ -8,6 +9,9 @@ import tomli
 from packaging import requirements as pkgreq, utils as pkgutil
 
 from ._internal import _Record
+
+
+log = logging.getLogger(__name__)
 
 
 pkg2dist = pkg_metadata.packages_distributions()
@@ -40,11 +44,15 @@ class Package(_Record):
             self.executables = {
                 ep.name for ep in metadata.entry_points if ep.group == 'console_scripts'
             }
+            log.debug('Package %s was associated with modules %s', self.package_name, self.modules)
+            log.debug('Package %s was associated with extensions %s', self.package_name, self.extends)
+            log.debug('Package %s was associated with executables %s', self.package_name, self.executables)
         else:
             self.installed = False
             self.modules = []
             self.extends = set()
             self.executables = set()
+            log.debug('Package %s is not installed', self.package_name)
 
 
 class PackageInspection(dict):
@@ -67,11 +75,19 @@ class PackageInspection(dict):
             project = pyproject.get('project', {})
 
             for dependency in project.get('dependencies', []):
-                self[pkgreq.Requirement(dependency).name]
+                clean_name = pkgreq.Requirement(dependency).name
+                log.info('Found package %s in pyproject project.dependencies', clean_name)
+                self[clean_name]
 
-            for optionals in project.get('optional-dependencies', {}).values():
+            for opt_name, optionals in project.get('optional-dependencies', {}).items():
                 for optional in optionals:
-                    self[pkgreq.Requirement(optional).name]
+                    clean_name = pkgreq.Requirement(optional).name
+                    log.info(
+                        'Found package %s in pyproject project.optional-dependencies.%s',
+                        clean_name,
+                        opt_name,
+                    )
+                    self[clean_name]
 
     def update_from_pip_requirements(self, requirements_file):
         """Add all packages found in the given requirements file"""
@@ -79,10 +95,12 @@ class PackageInspection(dict):
         with requirements_file.open('r') as requirements:
             for requirement in requirements:
                 requirement = requirement.strip()
-                if requirement.startswith('#') or requirement.startswith('--'):
+                if not requirement or requirement.startswith('#') or requirement.startswith('--'):
                     continue
                 if requirement.startswith('-r'):
                     sub_requirement = requirement[2:].strip()
-                    self.update_from_pip_requirements(requirements_file.with_name(sub_requirement))
+                    self.update_from_pip_requirements(requirements_file.parent / sub_requirement)
                     continue
-                self[pkgreq.Requirement(requirement).name]
+                clean_name = pkgreq.Requirement(requirement).name
+                log.info('Found package %s in %s', clean_name, requirements_file.name)
+                self[clean_name]

@@ -1,7 +1,9 @@
 import fnmatch
+import logging
 import os.path
-import warnings
 from pathlib import Path
+
+import rich.logging
 
 from packaging import requirements as pkgreq
 
@@ -11,6 +13,20 @@ from .executable_inspection import ExecutableInspection
 from .module_inspection import ModuleInspection
 from .package_inspection import PackageInspection
 from .settings import gather_args, gather_config, Settings
+
+
+log = logging.getLogger('bonded')
+
+
+def setup_logging(level):
+    if level < 1:
+        return
+    elif level > 5:
+        level = 5
+
+    lvl = [logging.CRITICAL, logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG][level - 1]
+    log.addHandler(rich.logging.RichHandler(level=lvl))
+    log.setLevel(lvl)
 
 
 def iter_source_files(starting_dir, excludes, file_pattern):
@@ -25,33 +41,34 @@ def iter_source_files(starting_dir, excludes, file_pattern):
 
 
 def main():
+    user_settings = {}
     arguments = gather_args()
-    if arguments.pyproject:
-        pyproject = Path(arguments.pyproject)
-        if not pyproject.is_file():
-            raise RuntimeWarning(f'Supplied --pyproject cannot be found: {pyproject}')
-    else:
+    if arguments.pyproject is None:
         pyproject = Path(arguments.search_path).resolve() / 'pyproject.toml'
         while not pyproject.is_file():
             if pyproject.parent == pyproject.parent.parent:
-                pyproject = ''
+                log.warn('Could not find a pyproject.toml')
                 break
             pyproject = pyproject.parent.parent / 'pyproject.toml'
-
-    if pyproject:
+        else:
+            arguments.pyproject = pyproject
+            user_settings = gather_config(pyproject)
+    elif arguments.pyproject:
+        pyproject = Path(arguments.pyproject)
+        if not pyproject.is_file():
+            raise RuntimeWarning(f'Supplied --pyproject cannot be found: {pyproject}')
         user_settings = gather_config(pyproject)
-    else:
-        warnings.warn(f'Could not find {pyproject} to collect requirements')
-        user_settings = {}
+
     user_settings.update(arguments._get_kwargs())
     settings = Settings(**user_settings)
+    setup_logging(settings.verbose)
 
     all_files = iter_source_files(settings.search_path, settings.exclude, '*')
     python_files = iter_source_files(settings.search_path, settings.exclude, '*.py')
 
     packages = PackageInspection(pkgreq.Requirement(req).name for req in settings.packages)
-    if pyproject:
-        packages.update_from_pyproject(pyproject)
+    if settings.pyproject:
+        packages.update_from_pyproject(settings.pyproject)
     for pip_requirements in settings.requirements:
         packages.update_from_pip_requirements(pip_requirements)
 

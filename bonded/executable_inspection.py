@@ -1,7 +1,11 @@
+import logging
 import re
 from collections import namedtuple
 
 from ._internal import _Record
+
+
+log = logging.getLogger(__name__)
 
 
 def detect_file_type(file_path, first_line):
@@ -71,3 +75,4 @@ class ExecutableInspection(dict):
                         self[exe].found_executions.add(
                             _CallingFile(project_file.name, file_type, lineno)
                         )
+                        log.debug('Found executable %s in %s:%s', exe, project_file, lineno)
