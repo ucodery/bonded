@@ -18,6 +18,7 @@ pkg2dist = pkg_metadata.packages_distributions()
 dist2pkg = defaultdict(list)
 for pkg, dists in pkg2dist.items():
     for dist in dists:
+        dist = pkgutil.canonicalize_name(dist)
         dist2pkg[dist].append(pkg)
 dist2pkg = dict(dist2pkg)
 
@@ -45,8 +46,12 @@ class Package(_Record):
                 ep.name for ep in metadata.entry_points if ep.group == 'console_scripts'
             }
             log.debug('Package %s was associated with modules %s', self.package_name, self.modules)
-            log.debug('Package %s was associated with extensions %s', self.package_name, self.extends)
-            log.debug('Package %s was associated with executables %s', self.package_name, self.executables)
+            log.debug(
+                'Package %s was associated with extensions %s', self.package_name, self.extends
+            )
+            log.debug(
+                'Package %s was associated with executables %s', self.package_name, self.executables
+            )
         else:
             self.installed = False
             self.modules = []

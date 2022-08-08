@@ -190,6 +190,8 @@ def test_relative_modules(python_file, module_inspection):
         'varible = """finish this later',
         'import ',
         'from ',
+        'import 42',
+        'from "this" import zen',
     ],
 )
 def test_unparsable_python(python_file, module_inspection):
