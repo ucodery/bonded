@@ -66,7 +66,7 @@ class PackageInspection(dict):
 
     def __init__(self, requirements):
         for req in requirements:
-            self[req]
+            self._add_from_requirement(req)
 
     def __missing__(self, key):
         ckey = pkgutil.canonicalize_name(key)

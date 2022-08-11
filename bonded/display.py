@@ -11,6 +11,8 @@ def format_final_disaplay(settings, modules, packages, executables):
         for pkg in packages.values():
             if modules[mod].name in pkg.modules:
                 break
+            if modules[mod].name == pkg.name:
+                break
         else:
             excess_modules.add(modules[mod])
 

@@ -65,7 +65,7 @@ def main():
     all_files = iter_source_files(settings.search_path, settings.exclude, '*')
     python_files = iter_source_files(settings.search_path, settings.exclude, '*.py')
 
-    packages = PackageInspection(pkgreq.Requirement(req).name for req in settings.packages)
+    packages = PackageInspection(settings.packages)
     if settings.pyproject:
         packages.update_from_pyproject(settings.pyproject)
     for pip_requirements in settings.requirements:
