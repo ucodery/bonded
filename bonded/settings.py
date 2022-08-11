@@ -1,7 +1,7 @@
 import argparse
 import dataclasses
 import os
-from typing import List
+from typing import List, Optional
 
 import tomli
 
@@ -12,8 +12,9 @@ class Settings:
     exclude: List[str]
     packages: List[str]
     requirements: List[str]
+    ignore_modules: List[str]
     report: List[str]
-    pyproject: str
+    pyproject: Optional[str]
     verbose: int
     quiet: bool
 
@@ -25,7 +26,13 @@ class Settings:
 
 def gather_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--packages', default='')
+    parser.add_argument(
+        '--package',
+        action='append',
+        help='Add a package to be checked for',
+        default=[],
+        dest='packages',
+    )
     parser.add_argument('-r', '--requirements', action='append', default=[])
     parser.add_argument('--pyproject', default=None)
     parser.add_argument(
@@ -34,14 +41,20 @@ def gather_args():
         help='A glob that will exclude paths otherwise matched',
         default=[],
     )
-    parser.add_argument('--report', choices=['table', 'extended-table', 'line'], default='table')
+    parser.add_argument(
+        '--ignore-module',
+        action='append',
+        help='This module will not be reported as missing a package',
+        default=[],
+        dest='ignore_modules',
+    )
+    parser.add_argument(
+        '--report', choices=['table', 'extended-table', 'line', 'none'], default='table'
+    )
     parser.add_argument('--verbose', '-v', action='count', default=0)
     parser.add_argument('--quiet', action='store_true')
     parser.add_argument('search_path', nargs='?', default=os.getcwd())
     args = parser.parse_args()
-
-    args.packages = args.packages.replace(',', ' ').split()
-
     return args
 
 

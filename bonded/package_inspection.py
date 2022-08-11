@@ -58,6 +58,7 @@ class Package(_Record):
             self.extends = set()
             self.executables = set()
             log.debug('Package %s is not installed', self.package_name)
+        self.markers = []
 
 
 class PackageInspection(dict):
@@ -73,6 +74,12 @@ class PackageInspection(dict):
             self[ckey] = Package(key)
         return self[ckey]
 
+    def _add_from_requirement(self, requirement):
+        parsed = pkgreq.Requirement(requirement)
+        self[parsed.name]
+        if parsed.marker:
+            self[parsed.name].markers.append(parsed.marker)
+
     def update_from_pyproject(self, pyproject_toml):
         """Add all packages found as requirements in the given pyproject.toml"""
         with open(pyproject_toml, 'rb') as pyproject_file:
@@ -80,19 +87,17 @@ class PackageInspection(dict):
             project = pyproject.get('project', {})
 
             for dependency in project.get('dependencies', []):
-                clean_name = pkgreq.Requirement(dependency).name
-                log.info('Found package %s in pyproject project.dependencies', clean_name)
-                self[clean_name]
+                log.info('Found dependency %s in pyproject project.dependencies', dependency)
+                self._add_from_requirement(dependency)
 
             for opt_name, optionals in project.get('optional-dependencies', {}).items():
                 for optional in optionals:
-                    clean_name = pkgreq.Requirement(optional).name
                     log.info(
-                        'Found package %s in pyproject project.optional-dependencies.%s',
-                        clean_name,
+                        'Found dependency %s in pyproject project.optional-dependencies.%s',
+                        optional,
                         opt_name,
                     )
-                    self[clean_name]
+                    self._add_from_requirement(optional)
 
     def update_from_pip_requirements(self, requirements_file):
         """Add all packages found in the given requirements file"""
@@ -106,6 +111,5 @@ class PackageInspection(dict):
                     sub_requirement = requirement[2:].strip()
                     self.update_from_pip_requirements(requirements_file.parent / sub_requirement)
                     continue
-                clean_name = pkgreq.Requirement(requirement).name
-                log.info('Found package %s in %s', clean_name, requirements_file.name)
-                self[clean_name]
+                log.info('Found requirement %s in %s', requirement, requirements_file.name)
+                self._add_from_requirement(requirement)

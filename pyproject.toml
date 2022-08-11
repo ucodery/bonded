@@ -28,6 +28,9 @@ dev = ["tox"]
 test = ["pytest >=2.7.3"]
 lint = ["blue", "pyproject-flake8", "usort"]
 
+[tool.bonded]
+exclude = [".*/**"]
+
 [tool.blue]
 line-length = 100
 

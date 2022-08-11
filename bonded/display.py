@@ -5,7 +5,9 @@ def format_final_disaplay(settings, modules, packages, executables):
     success_message = '' if settings.quiet else 'All Good!'
 
     excess_modules = set()
-    for mod in modules.iter_3rd_party(skip_modules=settings.project_modules):
+    for mod in modules.iter_3rd_party(
+        skip_modules=(settings.ignore_modules + settings.project_modules)
+    ):
         for pkg in packages.values():
             if modules[mod].name in pkg.modules:
                 break
@@ -28,6 +30,8 @@ def format_final_disaplay(settings, modules, packages, executables):
     for pkg in set(excess_packages):
         if any(ext in (packages.keys() ^ excess_packages) for ext in pkg.extends):
             excess_packages.remove(pkg)
+        elif pkg.markers and not any(mark.evaluate() for mark in pkg.markers):
+            excess_packages.remove(pkg)
 
     # Workarounds for problem packages
     for pkg in set(excess_packages):
@@ -44,6 +48,8 @@ def format_final_disaplay(settings, modules, packages, executables):
         return format_table_output(excess_modules, excess_packages) or success_message
     elif settings.report == 'line':
         return format_line_output(excess_modules, excess_packages) or success_message
+    elif settings.report == 'none':
+        return success_message
 
 
 def format_extended_table_output(modules, excess_modules, packages):

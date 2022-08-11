@@ -31,7 +31,7 @@ def setup_logging(level):
 
 def iter_source_files(starting_dir, excludes, file_pattern):
     for i, exclude in enumerate(excludes):
-        if not exclude.startswith(os.path.sep):
+        if not exclude.startswith(os.path.sep) and not exclude.startswith('**/'):
             excludes[i] = f'**/{exclude}'
 
     for path in Path(starting_dir).rglob(file_pattern):
@@ -41,7 +41,6 @@ def iter_source_files(starting_dir, excludes, file_pattern):
 
 
 def main():
-    user_settings = {}
     arguments = gather_args()
     if arguments.pyproject is None:
         pyproject = Path(arguments.search_path).resolve() / 'pyproject.toml'
@@ -52,15 +51,15 @@ def main():
             pyproject = pyproject.parent.parent / 'pyproject.toml'
         else:
             arguments.pyproject = pyproject
-            user_settings = gather_config(pyproject)
     elif arguments.pyproject:
-        pyproject = Path(arguments.pyproject)
-        if not pyproject.is_file():
-            raise RuntimeWarning(f'Supplied --pyproject cannot be found: {pyproject}')
-        user_settings = gather_config(pyproject)
+        if not os.path.isfile(arguments.pyproject):
+            raise RuntimeWarning(f'Supplied --pyproject cannot be found: {arguments.pyproject}')
 
-    user_settings.update(arguments._get_kwargs())
-    settings = Settings(**user_settings)
+    settings_kwargs = vars(arguments)
+    if arguments.pyproject:
+        settings_kwargs.update(gather_config(arguments.pyproject))
+    settings = Settings(**settings_kwargs)
+
     setup_logging(settings.verbose)
 
     all_files = iter_source_files(settings.search_path, settings.exclude, '*')
