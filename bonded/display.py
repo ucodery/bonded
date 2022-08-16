@@ -1,4 +1,5 @@
-from tabulate import tabulate
+from rich.columns import Columns
+from rich.table import Table
 
 
 def format_final_disaplay(settings, modules, packages, executables):
@@ -55,35 +56,34 @@ def format_final_disaplay(settings, modules, packages, executables):
 
 
 def format_extended_table_output(modules, excess_modules, packages):
-    headers = ['Package', 'Used', 'Module', 'Used']
-    columns = []
+    report = Table()
+    report.add_column('Package')
+    report.add_column('Used')
+    report.add_column('Module')
+    report.add_column('Used')
     for package in packages.values():
         mods = list(package.modules)
         mods.sort()
         if not mods:
-            columns.append([package.package_name, True, '---', '---'])
+            report.add_row(package.package_name, 'True', '---', '---')
         else:
             mod = mods.pop()
-            columns.append(
-                [
-                    package.package_name,
-                    any(modules[mod].found_import_stmt for mod in package.modules),
-                    mod,
-                    modules[mod].found_import_stmt,
-                ]
+            report.add_row(
+                package.package_name,
+                str(any(modules[mod].found_import_stmt for mod in package.modules)),
+                mod,
+                str(modules[mod].found_import_stmt or modules[mod].found_import_fun),
             )
         for mod in package.modules:
-            columns.append(['---', '---', mod, modules[mod].found_import_stmt])
+            report.add_row(
+                '---',
+                '---',
+                mod,
+                str(modules[mod].found_import_stmt or modules[mod].found_import_fun),
+            )
     for mod in excess_modules:
-        columns.append(
-            [
-                '???',
-                '???',
-                mod.name,
-                (mod.found_import_stmt or mod.found_import_fun),
-            ]
-        )
-    return tabulate(columns, headers, tablefmt='fancy_grid')
+        report.add_row('???', '???', mod.name, str(mod.found_import_stmt or mod.found_import_fun))
+    return report
 
 
 def format_line_output(excess_modules, excess_packages):
@@ -96,20 +96,21 @@ def format_line_output(excess_modules, excess_packages):
 
 
 def format_table_output(excess_modules, excess_packages):
-    output = ''
+    output = Columns()
 
     if excess_packages:
-        headers = ['Unused Package', 'Imports Not Found']
-        columns = [[p.package_name, ', '.join(m for m in p.modules)] for p in excess_packages]
-        output += tabulate(columns, headers, tablefmt='fancy_grid')
+        excess_packages_report = Table()
+        excess_packages_report.add_column('Unused Package')
+        excess_packages_report.add_column('Imports Not Found')
+        for ep in excess_packages:
+            excess_packages_report.add_row(ep.package_name, ', '.join(m for m in ep.modules))
+        output.add_renderable(excess_packages_report)
 
     if excess_modules:
-        headers = ['Modules Used Without a Package']
-        output += '\n'
-        output += tabulate(
-            [[m.name] for m in excess_modules],
-            headers,
-            tablefmt='fancy_grid',
-        )
+        excess_modules_report = Table()
+        excess_modules_report.add_column('Modules Used Without a Package')
+        for em in excess_modules:
+            excess_modules_report.add_row(em.name)
+        output.add_renderable(excess_modules_report)
 
     return output

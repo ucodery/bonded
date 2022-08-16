@@ -16,7 +16,6 @@ dependencies = [
     "importlib-metadata>=4.7",
     "packaging",
     "rich",
-    "tabulate",
     "tomli",
 ]
 
@@ -24,7 +23,7 @@ dependencies = [
 Home = "https://github.com/ucodery/bonded"
 
 [project.optional-dependencies]
-dev = ["tox", "flit"]
+dev = ["tox"]
 test = ["pytest >=2.7.3"]
 lint = ["blue", "pyproject-flake8", "usort"]
 

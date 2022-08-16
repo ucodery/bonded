@@ -4,6 +4,7 @@ import os.path
 from pathlib import Path
 
 import rich.logging
+from rich import print
 
 from .display import format_final_disaplay
 
