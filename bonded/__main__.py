@@ -5,8 +5,6 @@ from pathlib import Path
 
 import rich.logging
 
-from packaging import requirements as pkgreq
-
 from .display import format_final_disaplay
 
 from .executable_inspection import ExecutableInspection

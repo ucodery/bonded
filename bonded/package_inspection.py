@@ -88,7 +88,9 @@ class PackageInspection(dict):
             project = pyproject.get('project', {})
 
             for dependency in project.get('dependencies', []):
-                log.info('Found dependency %s in %s project.dependencies', dependency, pyproject_toml)
+                log.info(
+                    'Found dependency %s in %s project.dependencies', dependency, pyproject_toml
+                )
                 self._add_from_requirement(dependency)
 
             for opt_name, optionals in project.get('optional-dependencies', {}).items():
