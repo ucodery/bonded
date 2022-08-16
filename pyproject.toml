@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "bonded"
-version = "0.2a1"
+version = "0.3a1"
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [{name = "Jeremiah Paige", email = "ucodery@gmail.com"}]
@@ -24,7 +24,7 @@ dependencies = [
 Home = "https://github.com/ucodery/bonded"
 
 [project.optional-dependencies]
-dev = ["tox"]
+dev = ["tox", "flit"]
 test = ["pytest >=2.7.3"]
 lint = ["blue", "pyproject-flake8", "usort"]
 
