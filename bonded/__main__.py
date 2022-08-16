@@ -68,6 +68,8 @@ def main():
     packages = PackageInspection(settings.packages)
     if settings.pyproject:
         packages.update_from_pyproject(settings.pyproject)
+    if settings.setup:
+        packages.update_from_setup(settings.setup)
     for pip_requirements in settings.requirements:
         packages.update_from_pip_requirements(pip_requirements)
 

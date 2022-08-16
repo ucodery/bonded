@@ -15,6 +15,7 @@ class Settings:
     ignore_modules: List[str]
     report: List[str]
     pyproject: Optional[str]
+    setup: Optional[str]
     verbose: int
     quiet: bool
 
@@ -35,6 +36,7 @@ def gather_args():
     )
     parser.add_argument('-r', '--requirements', action='append', default=[])
     parser.add_argument('--pyproject', default=None)
+    parser.add_argument('--setup', help='Path to a setup.cfg which will be searched for requirements', default=None)
     parser.add_argument(
         '--exclude',
         action='append',

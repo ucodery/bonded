@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict
+from configparser import ConfigParser
 from pathlib import Path
 
 import importlib_metadata as pkg_metadata
@@ -87,14 +88,15 @@ class PackageInspection(dict):
             project = pyproject.get('project', {})
 
             for dependency in project.get('dependencies', []):
-                log.info('Found dependency %s in pyproject project.dependencies', dependency)
+                log.info('Found dependency %s in %s project.dependencies', dependency, pyproject_toml)
                 self._add_from_requirement(dependency)
 
             for opt_name, optionals in project.get('optional-dependencies', {}).items():
                 for optional in optionals:
                     log.info(
-                        'Found dependency %s in pyproject project.optional-dependencies.%s',
+                        'Found dependency %s in %s project.optional-dependencies.%s',
                         optional,
+                        pyproject_toml,
                         opt_name,
                     )
                     self._add_from_requirement(optional)
@@ -113,3 +115,18 @@ class PackageInspection(dict):
                     continue
                 log.info('Found requirement %s in %s', requirement, requirements_file.name)
                 self._add_from_requirement(requirement)
+
+    def update_from_setup(self, setup_cfg):
+        """Add all packages found in the given setup.cfg file"""
+        setup = ConfigParser()
+        setup.read(setup_cfg)
+        for requirement in setup.get('options', 'install_requires', fallback='').splitlines():
+            if requirement:
+                log.info('Found requirement %s in %s [options]', requirement, setup_cfg)
+                self._add_from_requirement(requirement)
+        if 'options.extras_require' in setup:
+            for requirements in setup['options.extras_require'].values():
+                for requirement in requirements.splitlines():
+                    if requirement:
+                        log.info('Found requirement %s in %s [options.extras_require]', requirement)
+                        self._add_from_requirement(requirement)
