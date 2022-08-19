@@ -102,6 +102,11 @@ class PackageInspection(dict):
                         opt_name,
                     )
                     self._add_from_requirement(optional)
+            for dependency in pyproject.get('build-system', {}).get('requires', []):
+                log.info(
+                    'Found dependency %s in %s build-system.requires', dependency, pyproject_toml
+                )
+                self._add_from_requirement(dependency)
 
     def update_from_pip_requirements(self, requirements_file):
         """Add all packages found in the given requirements file"""

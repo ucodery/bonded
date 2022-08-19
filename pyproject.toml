@@ -23,12 +23,13 @@ dependencies = [
 Home = "https://github.com/ucodery/bonded"
 
 [project.optional-dependencies]
-dev = ["tox"]
+dev = ["flit", "tox"]
 test = ["pytest >=2.7.3"]
 lint = ["blue", "pyproject-flake8", "usort"]
 
 [tool.bonded]
 exclude = [".*/**"]
+ignore_packages = ["flit"]
 
 [tool.blue]
 line-length = 100

@@ -18,6 +18,7 @@ class Settings:
     packages: List[str]
     requirements: List[str]
     ignore_modules: List[str]
+    ignore_packages: List[str]
     report: List[str]
     pyproject: Optional[str]
     setup: Optional[str]
@@ -55,11 +56,11 @@ class Settings:
 def gather_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--package',
-        action='append',
+        '--packages',
+        action='extend',
+        nargs='+',
         help='Add a package to be checked for',
         default=[],
-        dest='packages',
     )
     parser.add_argument('-r', '--requirements', action='append', default=[])
     parser.add_argument('--pyproject', default=None)
@@ -73,11 +74,18 @@ def gather_args():
         default=[],
     )
     parser.add_argument(
-        '--ignore-module',
-        action='append',
-        help='This module will not be reported as missing a package',
+        '--ignore-modules',
+        action='extend',
+        nargs='+',
+        help='These module will not be reported as missing a package',
         default=[],
-        dest='ignore_modules',
+    )
+    parser.add_argument(
+        '--ignore-packages',
+        action='extend',
+        nargs='+',
+        help='These packages will not be reported as unused',
+        default=[],
     )
     parser.add_argument(
         '--report', choices=['table', 'extended-table', 'line', 'none'], default='table'
