@@ -1,9 +1,14 @@
 import argparse
 import dataclasses
+import logging
 import os
+from pathlib import Path
 from typing import List, Optional
 
 import tomli
+
+
+log = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
@@ -23,6 +28,28 @@ class Settings:
     def project_modules(self):
         modules = [os.path.basename(os.path.realpath(self.search_path))]
         return modules
+
+    @classmethod
+    def from_interactive(cls):
+        arguments = gather_args()
+        if arguments.pyproject is None:
+            pyproject = Path(arguments.search_path).resolve() / 'pyproject.toml'
+            while not pyproject.is_file():
+                if pyproject.parent == pyproject.parent.parent:
+                    log.warn('Could not find a pyproject.toml')
+                    break
+                pyproject = pyproject.parent.parent / 'pyproject.toml'
+            else:
+                arguments.pyproject = pyproject
+        elif arguments.pyproject:
+            if not os.path.isfile(arguments.pyproject):
+                raise RuntimeWarning(f'Supplied --pyproject cannot be found: {arguments.pyproject}')
+
+        settings_kwargs = vars(arguments)
+        if arguments.pyproject:
+            settings_kwargs.update(gather_config(arguments.pyproject))
+
+        return cls(**settings_kwargs)
 
 
 def gather_args():

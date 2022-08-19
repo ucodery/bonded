@@ -1,17 +1,18 @@
 import fnmatch
 import logging
 import os.path
+import sys
 from pathlib import Path
 
 import rich.logging
-from rich import print
 
-from .display import format_final_disaplay
+from .display import display_closing, display_report
+from .evaluation import evaluate_bonds
 
 from .executable_inspection import ExecutableInspection
 from .module_inspection import ModuleInspection
 from .package_inspection import PackageInspection
-from .settings import gather_args, gather_config, Settings
+from .settings import Settings
 
 
 log = logging.getLogger('bonded')
@@ -40,24 +41,7 @@ def iter_source_files(starting_dir, excludes, file_pattern):
 
 
 def main():
-    arguments = gather_args()
-    if arguments.pyproject is None:
-        pyproject = Path(arguments.search_path).resolve() / 'pyproject.toml'
-        while not pyproject.is_file():
-            if pyproject.parent == pyproject.parent.parent:
-                log.warn('Could not find a pyproject.toml')
-                break
-            pyproject = pyproject.parent.parent / 'pyproject.toml'
-        else:
-            arguments.pyproject = pyproject
-    elif arguments.pyproject:
-        if not os.path.isfile(arguments.pyproject):
-            raise RuntimeWarning(f'Supplied --pyproject cannot be found: {arguments.pyproject}')
-
-    settings_kwargs = vars(arguments)
-    if arguments.pyproject:
-        settings_kwargs.update(gather_config(arguments.pyproject))
-    settings = Settings(**settings_kwargs)
+    settings = Settings.from_interactive()
 
     setup_logging(settings.verbose)
 
@@ -78,8 +62,12 @@ def main():
     executables = ExecutableInspection((e for p in packages.values() for e in p.executables))
     executables.inspect_executables(all_files)
 
-    print(format_final_disaplay(settings, modules, packages, executables))
+    report = evaluate_bonds(settings, modules, packages, executables)
+
+    display_report(settings, report)
+    display_closing(settings, report)
+    return 0 if report.passes() else 1
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
