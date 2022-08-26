@@ -3,7 +3,6 @@ import tokenize
 import warnings
 
 from ._internal import _Record
-from ._sys import stdlib_module_names
 
 
 log = logging.getLogger(__name__)
@@ -32,13 +31,6 @@ class ModuleInspection(dict):
     def __missing__(self, key):
         self[key] = Module(key)
         return self[key]
-
-    def iter_3rd_party(self, skip_modules=None):
-        for module_name in self:
-            if module_name not in stdlib_module_names and (
-                skip_modules and module_name not in skip_modules
-            ):
-                yield module_name
 
     def inspect_imports(self, project_files):
         """Collect all modules found in the given files"""

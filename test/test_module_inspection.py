@@ -150,24 +150,6 @@ def test_stdlib_imports(python_file, module_inspection):
     assert module_inspection['sys'].found_import_stmt
     assert 'os' in module_inspection
     assert module_inspection['os'].found_import_stmt
-    assert not list(module_inspection.iter_3rd_party())
-
-
-@pytest.mark.parametrize(
-    'code',
-    [
-        'import foo',
-        'import foo, bar',
-        'import foo, bar as rab, baz as baz',
-    ],
-)
-def test_skipped_modules(python_file, module_inspection):
-    module_inspection.find_imports_from_token(python_file)
-    filtered_modules = list(module_inspection.iter_3rd_party(skip_modules=['bar', 'baz']))
-    assert len(filtered_modules) == 1
-    filtered_module = filtered_modules.pop()
-    assert filtered_module == 'foo'
-    assert module_inspection[filtered_module].found_import_stmt
 
 
 @pytest.mark.parametrize(
