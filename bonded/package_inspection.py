@@ -114,11 +114,11 @@ class PackageInspection(dict):
         with requirements_file.open('r') as requirements:
             for requirement in requirements:
                 requirement = requirement.strip()
-                if not requirement or requirement.startswith('#') or requirement.startswith('--'):
-                    continue
-                if requirement.startswith('-r'):
-                    sub_requirement = requirement[2:].strip()
+                if requirement.startswith('-r') or requirement.startswith('--requirements'):
+                    sub_requirement = requirement.split()[1].strip()
                     self.update_from_pip_requirements(requirements_file.parent / sub_requirement)
+                    continue
+                if not requirement or requirement.startswith('#') or requirement.startswith('-'):
                     continue
                 log.info('Found requirement %s in %s', requirement, requirements_file.name)
                 self._add_from_requirement(requirement)
@@ -135,5 +135,9 @@ class PackageInspection(dict):
             for requirements in setup['options.extras_require'].values():
                 for requirement in requirements.splitlines():
                     if requirement:
-                        log.info('Found requirement %s in %s [options.extras_require]', requirement)
+                        log.info(
+                            'Found requirement %s in %s [options.extras_require]',
+                            requirement,
+                            setup_cfg,
+                        )
                         self._add_from_requirement(requirement)

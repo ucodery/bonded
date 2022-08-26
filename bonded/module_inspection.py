@@ -13,6 +13,7 @@ known_dynamic_loaders = [
     '__import__',
     'import_module',
     'run_module',
+    'importorskip',  # pytest helper
 ]
 
 
