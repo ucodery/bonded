@@ -91,7 +91,7 @@ def gather_args():
         '--report', choices=['table', 'extended-table', 'line', 'none'], default='table'
     )
     parser.add_argument('--verbose', '-v', action='count', default=0)
-    parser.add_argument('--quiet', action='store_true')
+    parser.add_argument('--quiet', '-q', action='store_true')
     parser.add_argument('search_path', nargs='?', default=os.getcwd())
     args = parser.parse_args()
     return args

@@ -1,6 +1,19 @@
+from enum import IntEnum
+from functools import cache
+
 import tomli
 
 from ._sys import stdlib_module_names
+
+
+class Confidence(IntEnum):
+    NONE = 0
+    VERY_LOW = 5
+    LOW = 10
+    MEDIUM = 15
+    HIGH = 20
+    VERY_HIGH = 25
+    SKIPPED = 30
 
 
 class Evaluation:
@@ -22,23 +35,27 @@ class Evaluation:
         return package.markers and not any(mark.evaluate() for mark in package.markers)
 
     def _package_module_used(self, package):
-        for pkg_mod in package.modules:
-            if self.evaluate_module(pkg_mod):
-                return True
-        return False
+        if not package.modules:
+            return Confidence.NONE
+        return max(self.evaluate_module(pkg_mod) for pkg_mod in package.modules)
 
     def _package_extention_used(self, package):
+        extension_used = Confidence.NONE
         for extension in package.extends:
-            if self.evaluate_package(extension) or self.evaluate_module(extension):
-                return True
-        return False
+            if extension == package.name:
+                continue
+            extension_used = max(
+                extension_used, self.evaluate_package(extension), self.evaluate_module(extension)
+            )
+        return extension_used
 
     def _package_executable_used(self, package):
-
+        executable_used = Confidence.NONE
         for executable in package.executables:
             if executable in self.executables and self.executables[executable].found_executions:
-                return True
-        return False
+                # TODO: check file type
+                return Confidence.MEDIUM
+        return executable_used
 
     def _package_used_anyway(self, package):
         """A series of workarounds for odd corners of the packaging world
@@ -47,25 +64,25 @@ class Evaluation:
         """
         # wheel only extends distutils, but setuptools is more frequently used
         if package.name == 'wheel' and self.evaluate_package('setuptools'):
-            return True
+            return Confidence.HIGH
         if 'pytest11' in package.extends and self.evaluate_package('pytest'):
-            return True
-        return False
+            return Confidence.HIGH
+        return Confidence.NONE
 
+    @cache
     def evaluate_package(self, package):
         if package not in self.packages:
-            return False
+            return Confidence.NONE
         pkg = self.packages[package]
-        return (
-            self._package_platform_ignored(pkg) or pkg.name in self.settings.ignore_packages
-        ) or (
-            pkg.installed
-            and (
-                self._package_module_used(pkg)
-                or self._package_extention_used(pkg)
-                or self._package_executable_used(pkg)
-                or self._package_used_anyway(pkg)
-            )
+        if self._package_platform_ignored(pkg) or pkg.name in self.settings.ignore_packages:
+            return Confidence.SKIPPED
+        if not pkg.installed:
+            return Confidence.NONE
+        return max(
+            self._package_module_used(pkg),
+            self._package_extention_used(pkg),
+            self._package_executable_used(pkg),
+            self._package_used_anyway(pkg),
         )
 
     def _module_belongs_to_package(self, module):
@@ -76,26 +93,40 @@ class Evaluation:
                 return True
         return False
 
+    def _module_imported(self, module):
+        if module.found_import_stmt:
+            return Confidence.VERY_HIGH
+        if module.found_import_fun:
+            return Confidence.HIGH
+        return Confidence.NONE
+
     def _module_used_for_build(self, module):
         if not self.settings.pyproject:
-            return False
+            return Confidence.NONE
         with open(self.settings.pyproject, 'rb') as pyproject_file:
             pyproject = tomli.load(pyproject_file)
         build_backend = pyproject.get('build-system', {}).get('build-backend')
         backend = build_backend.split(':')[0].split('.')[0]
-        return backend == module.name
+        if backend == module:
+            return Confidence.HIGH
+        return Confidence.NONE
 
+    @cache
     def evaluate_module(self, module):
         if module not in self.modules:
-            return False
+            return self._module_used_for_build(module)
         mod = self.modules[module]
-        return (
+        if (
             mod.name in self.stdlib_modules
             or mod.name in self.settings.project_modules
             or mod.name in self.settings.ignore_modules
-        ) or (
-            self._module_belongs_to_package(mod)
-            and (mod.found_import_stmt or mod.found_import_fun or self._module_used_for_build(mod))
+        ):
+            return Confidence.SKIPPED
+        if not self._module_belongs_to_package(mod):
+            return Confidence.NONE
+        return max(
+            self._module_imported(mod),
+            self._module_used_for_build(module),
         )
 
     def package_report(self):
