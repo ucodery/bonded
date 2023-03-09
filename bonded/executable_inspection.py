@@ -69,7 +69,7 @@ class ExecutableInspection(dict):
 
             file_type = detect_file_type(project_file, pfile[0])
 
-            for lineno, line in enumerate(pfile):
+            for lineno, line in enumerate(pfile, start=1):
                 for exe, search in exe_searches.items():
                     if search.search(line):
                         self[exe].found_executions.add(

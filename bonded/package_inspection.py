@@ -1,27 +1,16 @@
 import logging
-from collections import defaultdict
 from configparser import ConfigParser
 from pathlib import Path
-
-import importlib_metadata as pkg_metadata
 
 import tomli
 
 from packaging import requirements as pkgreq, utils as pkgutil
 
+from ._importlib import dist2pkg, metadata as pkg_metadata
 from ._internal import _Record
 
 
 log = logging.getLogger(__name__)
-
-
-pkg2dist = pkg_metadata.packages_distributions()
-dist2pkg = defaultdict(list)
-for pkg, dists in pkg2dist.items():
-    for dist in dists:
-        dist = pkgutil.canonicalize_name(dist)
-        dist2pkg[dist].append(pkg)
-dist2pkg = dict(dist2pkg)
 
 
 class Package(_Record):

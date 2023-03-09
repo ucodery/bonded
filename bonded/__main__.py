@@ -1,6 +1,5 @@
 import fnmatch
 import logging
-import os.path
 import sys
 from pathlib import Path
 
@@ -30,10 +29,6 @@ def setup_logging(level):
 
 
 def iter_source_files(starting_dir, excludes, file_pattern):
-    for i, exclude in enumerate(excludes):
-        if not exclude.startswith(os.path.sep) and not exclude.startswith('**/'):
-            excludes[i] = f'**/{exclude}'
-
     for path in Path(starting_dir).rglob(file_pattern):
         spath = str(path)
         if not excludes or not any(fnmatch.fnmatch(spath, exclude) for exclude in excludes):
@@ -44,6 +39,7 @@ def main():
     settings = Settings.from_interactive()
 
     setup_logging(settings.verbose)
+    log.info('Using settings %s', settings)
 
     all_files = iter_source_files(settings.search_path, settings.exclude, '*')
     python_files = iter_source_files(settings.search_path, settings.exclude, '*.py')

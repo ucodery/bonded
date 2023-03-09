@@ -21,37 +21,6 @@ def display_report(settings, evaluation):
     print(format_lookup[settings.report](evaluation))
 
 
-def format_extended_table_output(evaluation):
-    report = Table()
-    report.add_column('Package')
-    report.add_column('Used')
-    report.add_column('Module')
-    report.add_column('Used')
-    for package in evaluation.packages.values():
-        mods = list(package.modules)
-        mods.sort()
-        if not mods:
-            report.add_row(package.package_name, 'True', '---', '---')
-        else:
-            mod = mods.pop()
-            report.add_row(
-                package.package_name,
-                str(evaluation.evaluate_package(package.name)),
-                mod,
-                str(evaluation.evaluate_module(mod)),
-            )
-        for mod in package.modules:
-            report.add_row(
-                '---',
-                '---',
-                mod,
-                str(evaluation.evaluate_module(mod)),
-            )
-    for mod in evaluation.modules:
-        report.add_row('???', '???', mod, str(evaluation.evaluate_module(mod)))
-    return report
-
-
 def format_line_output(evaluation):
     report = ''
     excess_packages = evaluation.package_report()
@@ -83,4 +52,37 @@ def format_table_output(evaluation):
             excess_modules_report.add_row(em.name)
         report.add_renderable(excess_modules_report)
 
+    return report
+
+
+def format_extended_table_output(evaluation):
+    report = Table()
+    report.add_column('Package')
+    report.add_column('Used')
+    report.add_column('Module')
+    report.add_column('Used')
+    for package in evaluation.packages.values():
+        mods = list(package.modules)
+        mods.sort()
+        if not mods:
+            report.add_row(
+                package.package_name, str(evaluation.evaluate_package(package.name)), '---', '---'
+            )
+        else:
+            mod = mods.pop()
+            report.add_row(
+                package.package_name,
+                str(evaluation.evaluate_package(package.name)),
+                mod,
+                str(evaluation.evaluate_module(mod)),
+            )
+        for mod in package.modules:
+            report.add_row(
+                '---',
+                '---',
+                mod,
+                str(evaluation.evaluate_module(mod)),
+            )
+    for mod in evaluation.modules:
+        report.add_row('???', '???', mod, str(evaluation.evaluate_module(mod)))
     return report

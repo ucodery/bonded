@@ -28,7 +28,7 @@ test = ["pytest >=2.7.3"]
 lint = ["blue", "pyproject-flake8", "usort"]
 
 [tool.bonded]
-exclude = [".*/**"]
+exclude = [".*/", "__pycache__/"]
 ignore_packages = ["flit"]
 
 [tool.blue]
