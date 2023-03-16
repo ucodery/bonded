@@ -84,9 +84,10 @@ class Settings:
                 pyproject = pyproject.parent.parent / 'pyproject.toml'
             else:
                 arguments.pyproject = pyproject
-        elif arguments.pyproject:
-            if not os.path.isfile(arguments.pyproject):
-                raise RuntimeWarning(f'Supplied --pyproject cannot be found: {arguments.pyproject}')
+        elif not arguments.pyproject:
+            arguments.pyproject = None
+        elif not os.path.isfile(arguments.pyproject):
+            raise RuntimeWarning(f'Supplied --pyproject cannot be found: {arguments.pyproject}')
 
         settings_kwargs = {
             'search_path': _CWD,

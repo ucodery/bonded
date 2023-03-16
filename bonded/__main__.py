@@ -1,5 +1,6 @@
 import fnmatch
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -29,10 +30,19 @@ def setup_logging(level):
 
 
 def iter_source_files(starting_dir, excludes, file_pattern):
-    for path in Path(starting_dir).rglob(file_pattern):
-        spath = str(path)
-        if not excludes or not any(fnmatch.fnmatch(spath, exclude) for exclude in excludes):
-            yield path
+    for root, dirs, files in os.walk(starting_dir):
+        for f in fnmatch.filter(files, file_pattern):
+            full = os.path.join(root, f)
+            if not any(fnmatch.fnmatch(full, exclude) for exclude in excludes):
+                yield Path(full)
+        end = len(dirs)
+        for i, d in enumerate(reversed(dirs), 1):
+            full = os.path.join(root, d)
+            if any(
+                (fnmatch.fnmatch(full, exclude) or fnmatch.fnmatch(full + os.path.sep, exclude))
+                for exclude in excludes
+            ):
+                del dirs[end - i]
 
 
 def main():

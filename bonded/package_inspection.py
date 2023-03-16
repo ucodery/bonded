@@ -1,4 +1,7 @@
 import logging
+import os
+import stat
+import sysconfig
 from configparser import ConfigParser
 from pathlib import Path
 
@@ -20,6 +23,23 @@ class Package(_Record):
     def _normalize_name(name):
         return pkgutil.canonicalize_name(name)
 
+    def _executable_files(self):
+        """Return executable files provided by this package"""
+        for fname in pkg_metadata.files(self.package_name):
+            # this is the only path that is sure to be on PATH
+            # it is spelled with '/' on all platforms
+            fname = str(fname)
+            if fname.startswith('../../../bin/'):
+                exe_name = fname[13:]
+                fs_path = os.path.join(sysconfig.get_path('purelib'), fname)
+                if (
+                    exe_name
+                    and '/' not in exe_name
+                    and os.path.isfile(fs_path)
+                    and (os.stat(fs_path).st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH))
+                ):
+                    yield exe_name
+
     def __init__(self, package_name):
         super().__init__(package_name)
         self.package_name = package_name
@@ -35,6 +55,7 @@ class Package(_Record):
             self.executables = {
                 ep.name for ep in metadata.entry_points if ep.group == 'console_scripts'
             }
+            self.executables.update(exe for exe in self._executable_files())
             log.debug('Package %s was associated with modules %s', self.package_name, self.modules)
             log.debug(
                 'Package %s was associated with extensions %s', self.package_name, self.extends

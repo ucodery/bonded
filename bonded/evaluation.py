@@ -138,7 +138,7 @@ class Evaluation:
         return {module for name, module in self.modules.items() if not self.evaluate_module(name)}
 
     def passes(self):
-        return True
+        return not bool(self.package_report() or self.module_report())
 
 
 def evaluate_bonds(settings, modules, packages, executables):
