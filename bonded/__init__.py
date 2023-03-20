@@ -1,3 +1,3 @@
 """Have your imports passed inspection?"""
 
-# NOTE this is an alpha release and there is no stable public API
+# NOTE this is a beta release and the public API may change with every release
