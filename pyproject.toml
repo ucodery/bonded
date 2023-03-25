@@ -13,11 +13,14 @@ keywords = ["linter", "imports", "project", "metadata"]
 dynamic = ["description"]
 
 dependencies = [
-    "importlib-metadata>=4.7",
+    "importlib-metadata>=4.7,!=6.1",
     "packaging",
     "rich",
     "tomli",
 ]
+
+[project.scripts]
+bonded = "bonded.__main__:main"
 
 [project.urls]
 Home = "https://github.com/ucodery/bonded"

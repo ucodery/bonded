@@ -75,7 +75,7 @@ class Settings:
 
     @classmethod
     def from_interactive(cls):
-        arguments = gather_args(sys.argv[1:])
+        arguments = CLISettings.parse_args(sys.argv[1:])
         if not hasattr(arguments, 'pyproject'):
             pyproject = Path(getattr(arguments, 'search_path', _CWD)).resolve() / 'pyproject.toml'
             while not pyproject.is_file():
@@ -117,51 +117,49 @@ class Settings:
         return cls(**settings_kwargs)
 
 
-def gather_args(args):
-    parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
-    parser.add_argument(
-        '--pyproject',
-        help='Path to a pyproject.toml which will be searched for requirements and bonded settings',
-    )
-    parser.add_argument(
-        '--setup',
-        help='Path to a setup.cfg which will be searched for requirements',
-    )
-    parser.add_argument(
-        '--packages',
-        action='extend',
-        nargs='+',
-        help='Add a package to be checked for',
-    )
-    parser.add_argument(
-        '-r',
-        '--requirements',
-        action='append',
-        help='Pip-requirements file used to specify further requirements.'
-        ' Can be specified multiple times',
-    )
-    parser.add_argument(
-        '--ignore-modules',
-        action='extend',
-        nargs='+',
-        help='These module will not be reported as missing a package',
-    )
-    parser.add_argument(
-        '--ignore-packages',
-        action='extend',
-        nargs='+',
-        help='These packages will not be reported as unused',
-    )
-    parser.add_argument(
-        '--exclude',
-        action='append',
-        help='A glob that will exclude paths otherwise matched',
-    )
-    parser.add_argument('--report', choices=['table', 'extended-table', 'line', 'none'])
-    parser.add_argument('--verbose', '-v', action='count')
-    parser.add_argument('--quiet', '-q', action='store_true')
-    parser.add_argument('search_path', nargs='?')
-    return parser.parse_args(args)
+CLISettings = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
+CLISettings.add_argument(
+    '--pyproject',
+    help='Path to a pyproject.toml which will be searched for requirements and bonded settings',
+)
+CLISettings.add_argument(
+    '--setup',
+    help='Path to a setup.cfg which will be searched for requirements',
+)
+CLISettings.add_argument(
+    '--packages',
+    action='extend',
+    nargs='+',
+    help='Add a package to be checked for',
+)
+CLISettings.add_argument(
+    '-r',
+    '--requirements',
+    action='append',
+    help='Pip-requirements file used to specify further requirements.'
+    ' Can be specified multiple times',
+)
+CLISettings.add_argument(
+    '--ignore-modules',
+    action='extend',
+    nargs='+',
+    help='These module will not be reported as missing a package',
+)
+CLISettings.add_argument(
+    '--ignore-packages',
+    action='extend',
+    nargs='+',
+    help='These packages will not be reported as unused',
+)
+CLISettings.add_argument(
+    '--exclude',
+    action='append',
+    help='A glob that will exclude paths otherwise matched',
+)
+CLISettings.add_argument('--report', choices=['table', 'extended-table', 'line', 'none'])
+CLISettings.add_argument('--verbose', '-v', action='count')
+CLISettings.add_argument('--quiet', '-q', action='store_true')
+CLISettings.add_argument('search_path', nargs='?')
 
 
 def gather_config(pyproject):

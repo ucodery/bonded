@@ -1,7 +1,7 @@
 import os
 
 import bonded.settings
-from bonded.settings import gather_args, Settings
+from bonded.settings import CLISettings, Settings
 
 
 def test_no_preferences():
@@ -86,7 +86,7 @@ def test_project_modules(monkeypatch):
 
 
 def test_no_args():
-    assert vars(gather_args([])) == {}
+    assert vars(CLISettings.parse_args([])) == {}
 
 
 def test_multiple_and_many_args():
@@ -94,12 +94,12 @@ def test_multiple_and_many_args():
     at a time and many different times
     """
     assert vars(
-        gather_args(
+        CLISettings.parse_args(
             ['--packages', 'foo', 'bar', 'baz', '--packages', 'spam', 'ham', '--packages', 'eggs']
         )
     ) == {'packages': ['foo', 'bar', 'baz', 'spam', 'ham', 'eggs']}
     assert vars(
-        gather_args(
+        CLISettings.parse_args(
             [
                 '--ignore-modules',
                 'foo',
@@ -114,7 +114,7 @@ def test_multiple_and_many_args():
         )
     ) == {'ignore_modules': ['foo', 'bar', 'baz', 'spam', 'ham', 'eggs']}
     assert vars(
-        gather_args(
+        CLISettings.parse_args(
             [
                 '--ignore-packages',
                 'foo',
@@ -131,16 +131,16 @@ def test_multiple_and_many_args():
 
 
 def test_verbosity():
-    assert vars(gather_args(['-v'])) == {'verbose': 1}
-    assert vars(gather_args(['-vv'])) == {'verbose': 2}
-    assert vars(gather_args(['-vvv'])) == {'verbose': 3}
-    assert vars(gather_args(['-vvvv'])) == {'verbose': 4}
-    assert vars(gather_args(['-vvvvv'])) == {'verbose': 5}
-    assert vars(gather_args(['-vvvvvvv'])) == {'verbose': 7}
-    assert vars(gather_args(['-v', '-v', '-v'])) == {'verbose': 3}
-    assert vars(gather_args(['-vvv', '-q'])) == {'verbose': 3, 'quiet': True}
+    assert vars(CLISettings.parse_args(['-v'])) == {'verbose': 1}
+    assert vars(CLISettings.parse_args(['-vv'])) == {'verbose': 2}
+    assert vars(CLISettings.parse_args(['-vvv'])) == {'verbose': 3}
+    assert vars(CLISettings.parse_args(['-vvvv'])) == {'verbose': 4}
+    assert vars(CLISettings.parse_args(['-vvvvv'])) == {'verbose': 5}
+    assert vars(CLISettings.parse_args(['-vvvvvvv'])) == {'verbose': 7}
+    assert vars(CLISettings.parse_args(['-v', '-v', '-v'])) == {'verbose': 3}
+    assert vars(CLISettings.parse_args(['-vvv', '-q'])) == {'verbose': 3, 'quiet': True}
 
 
 def test_search_path():
-    assert vars(gather_args(['path'])) == {'search_path': 'path'}
-    assert vars(gather_args(['--', 'path'])) == {'search_path': 'path'}
+    assert vars(CLISettings.parse_args(['path'])) == {'search_path': 'path'}
+    assert vars(CLISettings.parse_args(['--', 'path'])) == {'search_path': 'path'}

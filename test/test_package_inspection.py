@@ -26,4 +26,4 @@ def test_loading_self():
     assert bonded.name == 'bonded'
     assert bonded.modules == ['bonded']
     assert bonded.extends == set()
-    assert bonded.executables == set()
+    assert bonded.executables == {'bonded'}
