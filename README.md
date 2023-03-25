@@ -2,7 +2,7 @@
 
 Do your imports pass inspection?
 
-[![bonded - do your imports pass inspection?](https://raw.githubusercontent.com/ucodery/bonded/master/wearhouse.png)](https://github.com/ucodery/bonded)
+[![bonded - do your imports pass inspection?](https://raw.githubusercontent.com/ucodery/bonded/master/warehouse.png)](https://github.com/ucodery/bonded)
 
 
 Bonded is a linter that alerts on both missing and unused requirements.
@@ -107,7 +107,7 @@ specified as arguments, if any.
 
 An example entry:
 ```toml
-[tool.boonded]
+[tool.bonded]
 search_path = 'src/mypackage'
 setup = 'src/setup.cfg'
 exclude = ['__pycache__/']
