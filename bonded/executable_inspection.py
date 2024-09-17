@@ -34,6 +34,8 @@ def detect_file_type(file_path, first_line):
         return 'ini'
     if file_path.suffix in ['yaml', 'yml']:
         return 'yaml'
+    if file_path.name in ['Makefile', 'makefile']:
+        return 'make'
 
 
 _CallingFile = namedtuple('_CallingFile', ['file_name', 'file_type', 'line_number'])
